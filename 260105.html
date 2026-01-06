@@ -257,7 +257,6 @@
             margin-bottom: 1.5rem;
             font-size: 0.875rem;
             font-weight: 700;
-            text-align: center;
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
@@ -635,22 +634,22 @@
         </div>
         
         <div class="status-section">
-            <h2>상태별 현황 <span id="statusInfo" style="font-size: 0.75rem; color: #6a737d; font-weight: 400; margin-left: 1rem;"></span></h2>
+            <h2>상태별 현황 (클릭하여 보기)<span id="statusInfo" style="font-size: 0.75rem; color: #6a737d; font-weight: 400; margin-left: 1rem;"></span></h2>
             <div class="status-grid">
                 <div class="status-item good" onclick="filterByStatus('양호')">
                     <div class="status-label">양호</div>
                     <div class="status-value" id="statusGood">-</div>
-                    <div class="status-desc">기준 충족 (클릭하여 보기)</div>
+                    <div class="status-desc">기준 충족</div>
                 </div>
                 <div class="status-item mid" onclick="filterByStatus('개선(장기)')">
                     <div class="status-label">개선(장기)</div>
                     <div class="status-value" id="statusMid">-</div>
-                    <div class="status-desc">중장기 개선 필요 (클릭하여 보기)</div>
+                    <div class="status-desc">중장기 개선 필요</div>
                 </div>
                 <div class="status-item urgent" onclick="filterByStatus('긴급조치')">
                     <div class="status-label">긴급조치</div>
                     <div class="status-value" id="statusUrgent">-</div>
-                    <div class="status-desc">즉시 조치 필요 (클릭하여 보기)</div>
+                    <div class="status-desc">즉시 조치 필요</div>
                 </div>
             </div>
         </div>
@@ -1390,3 +1389,4 @@
     </script>
 </body>
 </html>
+
