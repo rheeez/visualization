@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>금남로 접근성 분석</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Pretendard', 'Segoe UI', sans-serif;
+            background: #fafbfc;
+            color: #1a1a1a;
+            line-height: 1.5;
+        }
+        
+        .header {
+            background: #fff;
+            padding: 2rem;
+            text-align: center;
+            border-bottom: 1px solid #e1e4e8;
+            margin-bottom: 2rem;
+        }
+        
+        .header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 0.25rem;
+            letter-spacing: -0.02em;
+        }
+        
+        .header p {
+            font-size: 0.875rem;
+            color: #6a737d;
+            font-weight: 400;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 0 2rem 3rem;
+        }
+        
+        .heatmap-section {
+            background: #fff;
+            border: 1px solid #e1e4e8;
+            padding: 1.75rem 0 1.75rem 1.75rem;
+            margin-bottom: 2rem;
+        }
+        
+        .heatmap-section h2 {
+            color: #1a1a1a;
+            margin-bottom: 1.25rem;
+            font-size: 0.875rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding-right: 1.75rem;
+        }
+        
+        .heatmap-controls {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.25rem;
+            padding-right: 1.75rem;
+        }
+        
+        .sort-btn {
+            background: #f6f8fa;
+            border: 1px solid #d1d5da;
+            color: #24292f;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            transition: all 0.15s;
+        }
+        
+        .sort-btn:hover {
+            background: #e1e4e8;
+        }
+        
+        .sort-btn.active {
+            background: #0969da;
+            border-color: #0969da;
+            color: #fff;
+        }
+        
+        .heatmap-container {
+            position: relative;
+            width: 100%;
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+        
+        .heatmap-container::-webkit-scrollbar {
+            height: 8px;
+        }
+        
+        .heatmap-container::-webkit-scrollbar-track {
+            background: #f6f8fa;
+        }
+        
+        .heatmap-container::-webkit-scrollbar-thumb {
+            background: #d1d5da;
+            border-radius: 4px;
+        }
+        
+        .heatmap-container::-webkit-scrollbar-thumb:hover {
+            background: #959da5;
+        }
+        
+        #heatmapCanvas {
+            display: block;
+            cursor: pointer;
+        }
+        
+        .heatmap-tooltip {
+            position: fixed;
+            background: #24292f;
+            color: #fff;
+            padding: 0.5rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            pointer-events: none;
+            z-index: 1000;
+            white-space: nowrap;
+            display: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        
+        .standards {
+            background: #fff;
+            border: 1px solid #e1e4e8;
+            padding: 1.75rem;
+            margin-bottom: 2rem;
+        }
+        
+        .standards h2 {
+            color: #1a1a1a;
+            margin-bottom: 1.25rem;
+            font-size: 0.875rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .standards-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+        
+        .standard-item {
+            background: #f6f8fa;
+            padding: 1.5rem;
+            text-align: center;
+            border: 2px solid;
+        }
+        
+        .standard-item.width { border-color: #0969da; }
+        .standard-item.slope { border-color: #fb8500; }
+        .standard-item.step { border-color: #cf222e; }
+        
+        .standard-label {
+            font-size: 0.75rem;
+            color: #6a737d;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }
+        
+        .standard-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            font-variant-numeric: tabular-nums;
+        }
+        
+        .place-selector {
+            background: #fff;
+            border: 1px solid #e1e4e8;
+            padding: 1.75rem;
+            margin-bottom: 2rem;
+        }
+        
+        .place-selector h2 {
+            color: #1a1a1a;
+            margin-bottom: 1.5rem;
+            font-size: 0.875rem;
+            font-weight: 700;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .road-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            overflow-x: auto;
+            background: #fff;
+            border: 1px solid #e1e4e8;
+        }
+        
+        .road-layout::-webkit-scrollbar {
+            height: 6px;
+        }
+        
+        .road-layout::-webkit-scrollbar-track {
+            background: #f6f8fa;
+        }
+        
+        .road-layout::-webkit-scrollbar-thumb {
+            background: #d1d5da;
+        }
+        
+        .road-layout::-webkit-scrollbar-thumb:hover {
+            background: #959da5;
+        }
+        
+        .side {
+            display: flex;
+            flex-direction: row;
+        }
+        
+        .places-container {
+            display: flex;
+            flex-direction: row;
+            gap: 0.5rem;
+            padding: 1rem;
+            min-width: max-content;
+        }
+        
+        .road-line {
+            display: flex;
+            align-items: center;
+            padding: 1.5rem 1rem;
+            background: linear-gradient(90deg, #57606a 0%, #6a737d 100%);
+            position: relative;
+            border-top: 1px solid #24292f;
+            border-bottom: 1px solid #24292f;
+            min-width: max-content;
+            width: 100%;
+        }
+        
+        .road-line::before {
+            content: '';
+            position: absolute;
+            left: 1rem;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 2px;
+            background: repeating-linear-gradient(
+                to right,
+                #fff 0px,
+                #fff 30px,
+                transparent 30px,
+                transparent 50px
+            );
+        }
+        
+        .road-text {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: 0.5em;
+            z-index: 1;
+            text-transform: uppercase;
+            white-space: nowrap;
+            margin-left: 2rem;
+        }
+        
+        .place-btn {
+            background: #f6f8fa;
+            border: 1px solid #d1d5da;
+            color: #24292f;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-weight: 500;
+            font-size: 0.8125rem;
+            text-align: center;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        
+        .place-btn:hover {
+            border-color: #0969da;
+            background: #ddf4ff;
+            color: #0969da;
+        }
+        
+        .place-btn.active {
+            background: #0969da;
+            border-color: #0969da;
+            color: #fff;
+            font-weight: 600;
+        }
+        
+        .charts-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        
+        .chart-container {
+            background: #fff;
+            border: 1px solid #e1e4e8;
+            padding: 1.75rem;
+        }
+        
+        .chart-container h3 {
+            color: #1a1a1a;
+            margin-bottom: 1.5rem;
+            font-size: 0.875rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+        }
+        
+        .gauges-wrapper {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            padding: 1.5rem 0;
+        }
+        
+        .gauge-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .gauge-item canvas {
+            width: 100%;
+            max-width: 220px;
+            height: auto;
+        }
+        
+        .gauge-label {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        
+        .deviation-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 2.5rem;
+        }
+        
+        .deviation-item {
+            position: relative;
+        }
+        
+        .deviation-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .metric-name {
+            font-weight: 700;
+            color: #1a1a1a;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        
+        .metric-value {
+            color: #6a737d;
+            font-size: 0.8125rem;
+            font-variant-numeric: tabular-nums;
+            font-weight: 600;
+        }
+        
+        .deviation-bar-wrapper {
+            position: relative;
+            height: 64px;
+            background: #f6f8fa;
+            overflow: visible;
+            border: 2px solid #e1e4e8;
+        }
+        
+        .deviation-baseline {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #24292f;
+            z-index: 2;
+        }
+        
+        .deviation-baseline::before {
+            content: '기준';
+            position: absolute;
+            top: -24px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.6875rem;
+            color: #24292f;
+            white-space: nowrap;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .deviation-bar {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            transition: all 0.3s ease;
+            min-width: 40px;
+        }
+        
+        .deviation-bar.positive {
+            left: 50%;
+            background: #1f883d;
+        }
+        
+        .deviation-bar.negative {
+            right: 50%;
+            background: #cf222e;
+        }
+        
+        .deviation-value {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #1a1a1a;
+            background: #fff;
+            padding: 0.25rem 0.75rem;
+            font-variant-numeric: tabular-nums;
+            border: 2px solid #1a1a1a;
+        }
+        
+        @media (max-width: 1024px) {
+            .container {
+                padding: 0 1rem 2rem;
+            }
+            
+            .header {
+                padding: 1.5rem 1rem;
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .place-selector {
+                padding: 1rem;
+            }
+            
+            .road-line {
+                padding: 1rem 2rem;
+            }
+            
+            .road-text {
+                font-size: 1rem;
+                letter-spacing: 0.3em;
+            }
+            
+            .side {
+                padding: 0.75rem;
+            }
+            
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .gauges-wrapper {
+                grid-template-columns: 1fr;
+            }
+            
+            .standards-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .place-btn {
+                font-size: 0.75rem;
+                padding: 0.5rem 0.875rem;
+            }
+            
+            .heatmap-controls {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>금남로 접근성 분석</h1>
+        <p>기준값 대비 편차 및 레이더 차트</p>
+    </div>
+    
+    <div class="container">
+        <div class="heatmap-section">
+            <h2>전체 장소 접근성 현황</h2>
+            <div class="heatmap-controls">
+                <button class="sort-btn active" data-sort="none">전체</button>
+                <button class="sort-btn" data-sort="width">유효폭순</button>
+                <button class="sort-btn" data-sort="slope">기울기순</button>
+                <button class="sort-btn" data-sort="step">단차순</button>
+            </div>
+            <div class="heatmap-container">
+                <canvas id="heatmapCanvas"></canvas>
+            </div>
+        </div>
+        
+        <div class="heatmap-tooltip" id="heatmapTooltip"></div>
+        
+        <div class="standards">
+            <h2>접근성 기준</h2>
+            <div class="standards-grid">
+                <div class="standard-item width">
+                    <div class="standard-label">유효폭</div>
+                    <div class="standard-value">1.2m</div>
+                </div>
+                <div class="standard-item slope">
+                    <div class="standard-label">기울기</div>
+                    <div class="standard-value">4.8°</div>
+                </div>
+                <div class="standard-item step">
+                    <div class="standard-label">단차</div>
+                    <div class="standard-value">2.0cm</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="place-selector">
+            <h2>장소 선택</h2>
+            <div class="road-layout">
+                <div class="side">
+                    <div class="places-container" id="north-places"></div>
+                </div>
+                
+                <div class="road-line">
+                    <div class="road-text">금남로</div>
+                </div>
+                
+                <div class="side">
+                    <div class="places-container" id="south-places"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="charts-section">
+            <div class="chart-container">
+                <h3>지표별 상태</h3>
+                <div class="gauges-wrapper">
+                    <div class="gauge-item">
+                        <canvas id="gaugeWidth"></canvas>
+                        <div class="gauge-label">유효폭</div>
+                    </div>
+                    <div class="gauge-item">
+                        <canvas id="gaugeSlope"></canvas>
+                        <div class="gauge-label">기울기</div>
+                    </div>
+                    <div class="gauge-item">
+                        <canvas id="gaugeStep"></canvas>
+                        <div class="gauge-label">단차</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <h3>편차 차트</h3>
+                <div class="deviation-bars" id="deviationBars"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const data = {"standards": {"유효폭_m": 1.2, "기울기_도": 4.8, "단차_cm": 2.0}, "places": [{"장소": "518민주화운동기록관", "상태": "양호", "유효폭": {"값": 1.9, "편차": 0.5, "점수": 135.7}, "기울기": {"값": 5.8, "편차": 1.0, "점수": 39.6}, "단차": {"값": null, "편차": null, "점수": null}, "위치": "북쪽"}, {"장소": "GS25금남센터시티점", "상태": "양호", "유효폭": {"값": 3.0, "편차": 1.6, "점수": 214.3}, "기울기": {"값": null, "편차": null, "점수": null}, "단차": {"값": 3.3, "편차": 1.3, "점수": 17.5}, "위치": "북쪽"}, {"장소": "NH농협은행", "상태": "개선(장기)", "유효폭": {"값": 2.67, "편차": 1.27, "점수": 190.5}, "기울기": {"값": 16.0, "편차": 11.2, "점수": 0.0}, "단차": {"값": 18.0, "편차": 16.0, "점수": 0.0}, "위치": "북쪽"}, {"장소": "NH투자증권", "상태": "양호", "유효폭": {"값": 1.57, "편차": 0.17, "점수": 111.9}, "기울기": {"값": 1.0, "편차": -3.8, "점수": 89.6}, "단차": {"값": null, "편차": null, "점수": null}, "위치": "북쪽"}, {"장소": "SC제일은행", "상태": "양호", "유효폭": {"값": 1.88, "편차": 0.48, "점수": 134.3}, "기울기": {"값": 8.8, "편차": 4.0, "점수": 8.3}, "단차": {"값": null, "편차": null, "점수": null}, "위치": "남쪽"}, {"장소": "SKT", "상태": "양호", "유효폭": {"값": 1.8, "편차": 0.4, "점수": 128.6}, "기울기": {"값": 5.85, "편차": 1.05, "점수": 39.1}, "단차": {"값": null, "편차": null, "점수": null}, "위치": "남쪽"}, {"장소": "SK브로드밴드", "상태": "양호", "유효폭": {"값": 2.5, "편차": 1.1, "점수": 178.6}, "기울기": {"값": 6.6, "편차": 1.8, "점수": 31.2}, "단차": {"값": null, "편차": null, "점수": null}, "위치": "북쪽"}, {"장소": "TUNA", "상태": "양호", "유효폭": {"값": 2.7, "편차": 1.3, "점수": 192.9}, "기울기": {"값": 9.1, "편차": 4.3, "점수": 5.2}, "단차": {"값": null, "편차": null, "점수": null}, "위치": "남쪽"}, {"장소": "YMCA", "상태": "양호", "유효폭": {"값": 2.66, "편차": 1.26, "점수": 190.2}, "기울기": {"값": 5.0, "편차": 0.2, "점수": 47.9}, "단차": {"값": 4.65, "편차": 2.65, "점수": 0.0}, "위치": "남쪽"}, {"장소": "광주시립미술관", "상태": "긴급조치", "유효폭": {"값": 3.0, "편차": 1.6, "점수": 214.3}, "기울기": {"값": null, "편차": null, "점수": null}, "단차": {"값": null, "편차": null, "점수": null}, "위치": "북쪽"}, {"장소": "금고제작소", "상태": "양호", "유효폭": {"값": 1.0, "편차": -0.4, "점수": 71.4}, "기울기": {"값": 3.95, "편차": -0.85, "점수": 58.9}, "단차": {"값": null, "편차": null, "점수": null}, "위치": "남쪽"}, {"장소": "금남로공원", "상태": "양호", "유효폭": {"값": 3.25, "편차": 1.85, "점수": 232.1}, "기울기": {"값": 2.4, "편차": -2.4, "점수": 75.0}, "단차": {"값": null, "편차": null, "점수": null}, "위치": "남쪽"}, {"장소": "네이버스퀘어광주", "상태": "양호", "유효폭": {"값": 2.55, "편차": 1.15, "점수": 182.1}, "기울기": {"값": 7.7, "편차": 2.9, "점수": 19.8}, "단차": {"값": null, "편차": null, "점수": null}, "위치": "북쪽"}, {"장소": "노스페이스", "상태": "양호", "유효폭": {"값": 3.68, "편차": 2.28, "점수": 262.5}, "기울기": {"값": 1.4, "편차": -3.4, "점수": 85.4}, "단차": {"값": null, "편차": null, "점수": null}, "위치": "남쪽"}, {"장소": "대한치과", "상태": "개선(장기)", "유효폭": {"값": 1.9, "편차": 0.5, "점수": 135.7}, "기울기": {"값": null, "편차": null, "점수": null}, "단차": {"값": 18.0, "편차": 16.0, "점수": 0.0}, "위치": "북쪽"}, {"장소": "루이까스텔", "상태": "개선(장기)", "유효폭": {"값": 2.75, "편차": 1.35, "점수": 196.4}, "기울기": {"값": null, "편차": null, "점수": null}, "단차": {"값": 21.0, "편차": 19.0, "점수": 0.0}, "위치": "북쪽"}, {"장소": "무등빌딩", "상태": "양호", "유효폭": {"값": 2.32, "편차": 0.92, "점수": 165.5}, "기울기": {"값": 7.0, "편차": 2.2, "점수": 27.1}, "단차": {"값": null, "편차": null, "점수": null}, "위치": "남쪽"}, {"장소": "센스플라워", "상태": "양호", "유효폭": {"값": 2.16, "편차": 0.76, "점수": 154.3}, "기울기": {"값": null, "편차": null, "점수": null}, "단차": {"값": 6.33, "편차": 4.33, "점수": 0.0}, "위치": "북쪽"}, {"장소": "아성빌딩", "상태": "양호", "유효폭": {"값": 1.5, "편차": 0.1, "점수": 107.1}, "기울기": {"값": 5.6, "편차": 0.8, "점수": 41.7}, "단차": {"값": null, "편차": null, "점수": null}, "위치": "남쪽"}, {"장소": "아이스마트", "상태": "개선(장기)", "유효폭": {"값": 1.8, "편차": 0.4, "점수": 128.6}, "기울기": {"값": null, "편차": null, "점수": null}, "단차": {"값": 7.0, "편차": 5.0, "점수": 0.0}, "위치": "북쪽"}, {"장소": "엘리베이터", "상태": "개선(장기)", "유효폭": {"값": 1.5, "편차": 0.1, "점수": 107.1}, "기울기": {"값": 10.1, "편차": 5.3, "점수": 0.0}, "단차": {"값": null, "편차": null, "점수": null}, "위치": "북쪽"}, {"장소": "우리은행", "상태": "양호", "유효폭": {"값": 2.0, "편차": 0.6, "점수": 142.9}, "기울기": {"값": 6.67, "편차": 1.88, "점수": 30.5}, "단차": {"값": null, "편차": null, "점수": null}, "위치": "남쪽"}, {"장소": "유광빌딩", "상태": "긴급 조치", "유효폭": {"값": 1.2, "편차": -0.2, "점수": 85.7}, "기울기": {"값": 10.0, "편차": 5.2, "점수": 0.0}, "단차": {"값": null, "편차": null, "점수": null}, "위치": "남쪽"}, {"장소": "전일빌딩(동)", "상태": "양호", "유효폭": {"값": null, "편차": null, "점수": null}, "기울기": {"값": null, "편차": null, "점수": null}, "단차": {"값": null, "편차": null, "점수": null}, "위치": "북쪽"}, {"장소": "전일빌딩(서)", "상태": "양호", "유효폭": {"값": 3.5, "편차": 2.1, "점수": 250.0}, "기울기": {"값": null, "편차": null, "점수": null}, "단차": {"값": null, "편차": null, "점수": null}, "위치": "북쪽"}, {"장소": "천하주차장", "상태": "양호", "유효폭": {"값": 1.3, "편차": -0.1, "점수": 92.9}, "기울기": {"값": 5.9, "편차": 1.1, "점수": 38.5}, "단차": {"값": null, "편차": null, "점수": null}, "위치": "남쪽"}, {"장소": "커피리나", "상태": "양호", "유효폭": {"값": 0.9, "편차": -0.5, "점수": 64.3}, "기울기": {"값": 2.2, "편차": -2.6, "점수": 77.1}, "단차": {"값": null, "편차": null, "점수": null}, "위치": "북쪽"}, {"장소": "토탈공인중개사사무소", "상태": "양호", "유효폭": {"값": 2.05, "편차": 0.65, "점수": 146.4}, "기울기": {"값": null, "편차": null, "점수": null}, "단차": {"값": 2.37, "편차": 0.37, "점수": 40.8}, "위치": "북쪽"}, {"장소": "투썸플레이스", "상태": "양호", "유효폭": {"값": 2.22, "편차": 0.82, "점수": 158.6}, "기울기": {"값": 3.53, "편차": -1.27, "점수": 63.2}, "단차": {"값": null, "편차": null, "점수": null}, "위치": "남쪽"}, {"장소": "풀덤", "상태": "양호", "유효폭": {"값": 1.2, "편차": -0.2, "점수": 85.7}, "기울기": {"값": 3.5, "편차": -1.3, "점수": 63.5}, "단차": {"값": null, "편차": null, "점수": null}, "위치": "남쪽"}, {"장소": "하나은행(동)", "상태": "양호", "유효폭": {"값": 1.7, "편차": 0.3, "점수": 121.4}, "기울기": {"값": 26.0, "편차": 21.2, "점수": 0.0}, "단차": {"값": null, "편차": null, "점수": null}, "위치": "북쪽"}, {"장소": "하나은행(서)", "상태": "양호", "유효폭": {"값": 1.4, "편차": 0.0, "점수": 100.0}, "기울기": {"값": 8.6, "편차": 3.8, "점수": 10.4}, "단차": {"값": null, "편차": null, "점수": null}, "위치": "북쪽"}, {"장소": "한국투자증권(동)", "상태": "개선(장기)", "유효폭": {"값": 1.4, "편차": 0.0, "점수": 100.0}, "기울기": {"값": 8.0, "편차": 3.2, "점수": 16.7}, "단차": {"값": 18.0, "편차": 16.0, "점수": 0.0}, "위치": "북쪽"}, {"장소": "한국투자증권(서)", "상태": "양호", "유효폭": {"값": 2.4, "편차": 1.0, "점수": 171.4}, "기울기": {"값": null, "편차": null, "점수": null}, "단차": {"값": 18.0, "편차": 16.0, "점수": 0.0}, "위치": "북쪽"}, {"장소": "흥국화재빌딩", "상태": "양호", "유효폭": {"값": 2.37, "편차": 0.97, "점수": 169.0}, "기울기": {"값": 5.6, "편차": 0.8, "점수": 41.7}, "단차": {"값": null, "편차": null, "점수": null}, "위치": "남쪽"}], "overall": {"유효폭_평균": 2.27, "기울기_평균": 6.6, "단차_평균": 9.11, "유효폭_기준초과": 75, "기울기_기준초과": 24, "단차_기준초과": 14}};
+        let currentPlace = null;
+        let heatmapData = [];
+        let sortedPlaces = [];
+        
+        // 점수 계산 함수
+        function calculateScore(value, standard, type) {
+            if (value === null) return null;
+            
+            if (type === '유효폭') {
+                // 넓을수록 좋음: (실제값 / 기준값) × 100
+                return (value / standard) * 100;
+            } else if (type === '기울기' || type === '단차') {
+                // 작을수록 좋음
+                if (value <= standard) {
+                    // 기준 이하: 100점 + 보너스
+                    return 100 + ((standard - value) / standard) * 100;
+                } else {
+                    // 기준 초과: 역비율로 점수 계산 (0점은 안 되도록)
+                    const ratio = standard / value;
+                    return Math.max(ratio * 100, 10); // 최소 10점은 보장
+                }
+            }
+            return 100;
+        }
+        
+        // 장소명 매칭을 위한 맵
+        const nameMap = {
+            'GS25금남센터시티점': 'GS25',
+            '네이버스퀘어광주': '네이버파트너스퀘어광주',
+            '토탈공인중개사사무소': '토탈공인중개사무소',
+            '우리은행': '(구)우리은행',
+            '흥국화재빌딩': '흥국화재',
+            '금고제작소': 'OK금고제작소',
+            '아성빌딩': '아송빌딩',
+            'TUNA': 'LGU+'
+        };
+        
+        // 지정된 순서
+        const northOrder = [
+            'SK브로드밴드', 'NH농협은행', '네이버파트너스퀘어광주', '518민주화운동기록관',
+            'NH투자증권', '루이까스텔', '대한치과', '토탈공인중개사무소',
+            '커피리나', '광주시립미술관', '센스플라워', '아이스마트',
+            'GS25', '한국투자증권(서)', '한국투자증권(동)', '하나은행(서)',
+            '하나은행(동)', '전일빌딩(서)', '전일빌딩(동)', '엘리베이터'
+        ];
+        
+        const southOrder = [
+            '금남로공원', '투썸플레이스', 'SC제일은행', '(구)우리은행',
+            '흥국화재', 'OK금고제작소', '유광빌딩', '아송빌딩',
+            '무등빌딩', 'LGU+', 'SKT', 'YMCA',
+            '풀덤', '노스페이스', '천하주차장', '엘리베이터'
+        ];
+        
+        function getDisplayName(placeName) {
+            return nameMap[placeName] || placeName;
+        }
+        
+        function findPlaceByDisplayName(displayName) {
+            // 역매칭 - 표시 이름으로 원본 데이터 찾기
+            for (const [original, mapped] of Object.entries(nameMap)) {
+                if (mapped === displayName) {
+                    return data.places.find(p => p.장소 === original);
+                }
+            }
+            return data.places.find(p => p.장소 === displayName);
+        }
+        
+        function initPlaceButtons() {
+            const northContainer = document.getElementById('north-places');
+            const southContainer = document.getElementById('south-places');
+            
+            // 북쪽 버튼 생성 (지정된 순서대로)
+            northOrder.forEach(displayName => {
+                const place = findPlaceByDisplayName(displayName);
+                if (place) {
+                    const btn = document.createElement('button');
+                    btn.className = 'place-btn';
+                    btn.textContent = displayName;
+                    btn.dataset.placeName = place.장소; // 원본 이름 저장
+                    btn.onclick = () => selectPlaceByOriginalName(place.장소);
+                    northContainer.appendChild(btn);
+                }
+            });
+            
+            // 남쪽 버튼 생성 (지정된 순서대로)
+            southOrder.forEach(displayName => {
+                const place = findPlaceByDisplayName(displayName);
+                if (place) {
+                    const btn = document.createElement('button');
+                    btn.className = 'place-btn south-btn';
+                    btn.textContent = displayName;
+                    btn.dataset.placeName = place.장소; // 원본 이름 저장
+                    btn.onclick = () => selectPlaceByOriginalName(place.장소);
+                    southContainer.appendChild(btn);
+                }
+            });
+            
+            // 도로 너비를 버튼 컨테이너와 맞추고 남쪽 버튼 padding 조정
+            setTimeout(() => {
+                const roadLine = document.querySelector('.road-line');
+                const northWidth = northContainer.scrollWidth;
+                const southWidth = southContainer.scrollWidth;
+                const maxWidth = Math.max(northWidth, southWidth);
+                
+                roadLine.style.minWidth = maxWidth + 'px';
+                
+                // 남쪽이 더 짧으면 버튼 padding을 늘려서 맞춤
+                if (southWidth < northWidth) {
+                    const southButtons = southContainer.querySelectorAll('.place-btn');
+                    const widthDiff = northWidth - southWidth;
+                    const extraPaddingPerButton = widthDiff / (southButtons.length * 2); // 좌우 양쪽
+                    
+                    southButtons.forEach(btn => {
+                        const currentPadding = parseFloat(getComputedStyle(btn).paddingLeft);
+                        const newPadding = currentPadding + extraPaddingPerButton;
+                        btn.style.paddingLeft = `${newPadding}px`;
+                        btn.style.paddingRight = `${newPadding}px`;
+                    });
+                }
+            }, 0);
+            
+            // 첫 번째 장소 선택
+            const firstPlace = findPlaceByDisplayName(northOrder[0]);
+            if (firstPlace) {
+                selectPlaceByOriginalName(firstPlace.장소);
+            }
+        }
+        
+        function selectPlaceByOriginalName(originalName) {
+            const place = data.places.find(p => p.장소 === originalName);
+            if (!place) return;
+            
+            currentPlace = place;
+            document.querySelectorAll('.place-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.placeName === originalName);
+            });
+            updateGaugeCharts();
+            updateDeviationChart();
+        }
+        
+        function updateGaugeCharts() {
+            const standards = data.standards;
+            
+            // 유효폭 게이지
+            const widthValue = currentPlace.유효폭.값;
+            clearCanvas('gaugeWidth');
+            if (widthValue !== null) {
+                createGauge('gaugeWidth', widthValue, standards.유효폭_m, '유효폭', 'm', 'higher');
+            } else {
+                drawNoData('gaugeWidth', '유효폭');
+            }
+            
+            // 기울기 게이지
+            const slopeValue = currentPlace.기울기.값;
+            clearCanvas('gaugeSlope');
+            if (slopeValue !== null) {
+                createGauge('gaugeSlope', slopeValue, standards.기울기_도, '기울기', '°', 'lower');
+            } else {
+                drawNoData('gaugeSlope', '기울기');
+            }
+            
+            // 단차 게이지
+            const stepValue = currentPlace.단차.값;
+            clearCanvas('gaugeStep');
+            if (stepValue !== null) {
+                createGauge('gaugeStep', stepValue, standards.단차_cm, '단차', 'cm', 'lower');
+            } else {
+                drawNoData('gaugeStep', '단차');
+            }
+        }
+        
+        function clearCanvas(canvasId) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+        
+        function drawNoData(canvasId, label) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = 220;
+            canvas.height = 170;
+            
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            
+            // N/A 표시
+            ctx.fillStyle = '#959da5';
+            ctx.font = 'bold 18px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('데이터 없음', centerX, centerY);
+        }
+        
+        function createGauge(canvasId, value, standard, label, unit, type) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            
+            // 캔버스 크기 증가 - 높이를 더 늘림
+            canvas.width = 220;
+            canvas.height = 170;
+            
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height - 45;
+            const radius = 80;
+            
+            // 배경 호 그리기
+            ctx.lineWidth = 24;
+            
+            // 빨강 영역
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, Math.PI, Math.PI * 1.33, false);
+            ctx.strokeStyle = '#cf222e';
+            ctx.stroke();
+            
+            // 노랑 영역
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, Math.PI * 1.33, Math.PI * 1.66, false);
+            ctx.strokeStyle = '#fb8500';
+            ctx.stroke();
+            
+            // 초록 영역
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, Math.PI * 1.66, Math.PI * 2, false);
+            ctx.strokeStyle = '#1f883d';
+            ctx.stroke();
+            
+            // 값에 따른 바늘 각도 계산
+            let percentage;
+            if (type === 'higher') {
+                // 유효폭: 높을수록 좋음
+                if (value < standard * 0.8) {
+                    percentage = (value / (standard * 0.8)) * 33.3;
+                } else if (value < standard) {
+                    percentage = 33.3 + ((value - standard * 0.8) / (standard * 0.2)) * 33.3;
+                } else {
+                    // 기준 이상이면 초록 영역
+                    percentage = 66.7 + Math.min((value - standard) / (standard * 0.5) * 33.3, 33.3);
+                }
+            } else {
+                // 기울기, 단차: 낮을수록 좋음
+                if (value <= standard) {
+                    percentage = 100 - (value / standard) * 33.3;
+                } else if (value <= standard * 2) {
+                    percentage = 66.7 - ((value - standard) / standard) * 33.3;
+                } else {
+                    percentage = Math.max(33.3 - ((value - standard * 2) / standard) * 33.3, 0);
+                }
+            }
+            
+            const angle = Math.PI + (Math.PI * percentage / 100);
+            
+            // 바늘 그리기
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(
+                centerX + Math.cos(angle) * (radius - 12),
+                centerY + Math.sin(angle) * (radius - 12)
+            );
+            ctx.strokeStyle = '#24292f';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+            
+            // 중심점
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 6, 0, Math.PI * 2);
+            ctx.fillStyle = '#24292f';
+            ctx.fill();
+            
+            // 값 표시 (위쪽)
+            ctx.fillStyle = '#1a1a1a';
+            ctx.font = 'bold 22px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(`${value}${unit}`, centerX, centerY - radius - 15);
+            
+            // 기준선 표시 (아래쪽 - 여유있게)
+            ctx.font = '12px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.fillStyle = '#6a737d';
+            ctx.fillText(`기준: ${standard}${unit}`, centerX, centerY + 40);
+        }
+        
+        
+        function drawHeatmap(sortBy = 'none') {
+            const canvas = document.getElementById('heatmapCanvas');
+            const container = canvas.parentElement;
+            const ctx = canvas.getContext('2d');
+            
+            // 데이터 정렬 - 최소 2개 이상의 지표에 값이 있는 장소만 표시
+            let places = [...data.places].filter(p => {
+                const hasWidth = p.유효폭.값 !== null;
+                const hasSlope = p.기울기.값 !== null;
+                const hasStep = p.단차.값 !== null;
+                const count = (hasWidth ? 1 : 0) + (hasSlope ? 1 : 0) + (hasStep ? 1 : 0);
+                return count >= 2; // 최소 2개 이상
+            });
+            
+            // 정렬하지 않으면 원본 순서 유지
+            if (sortBy === 'width') {
+                places.sort((a, b) => (b.유효폭.값 || 0) - (a.유효폭.값 || 0));
+            } else if (sortBy === 'slope') {
+                places.sort((a, b) => (a.기울기.값 || 999) - (b.기울기.값 || 999));
+            } else if (sortBy === 'step') {
+                places.sort((a, b) => (a.단차.값 || 999) - (b.단차.값 || 999));
+            }
+            
+            sortedPlaces = places;
+            
+            // 컨테이너 너비에 맞게 셀 크기 계산
+            const containerWidth = container.clientWidth;
+            const labelWidth = 80;
+            const headerHeight = 120;
+            const cellHeight = 50;
+            const availableWidth = containerWidth - labelWidth - 20; // 20px 여유
+            const cellWidth = Math.max(25, Math.min(40, availableWidth / places.length)); // 최소 25px, 최대 40px
+            
+            // 고해상도 디스플레이 대응
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = (labelWidth + cellWidth * places.length) * dpr;
+            canvas.height = (headerHeight + cellHeight * 3) * dpr;
+            canvas.style.width = (labelWidth + cellWidth * places.length) + 'px';
+            canvas.style.height = (headerHeight + cellHeight * 3) + 'px';
+            ctx.scale(dpr, dpr);
+            
+            // 배경
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 0, labelWidth + cellWidth * places.length, headerHeight + cellHeight * 3);
+            
+            // 헤더 배경
+            ctx.fillStyle = '#f6f8fa';
+            ctx.fillRect(0, 0, labelWidth + cellWidth * places.length, headerHeight);
+            
+            // 장소명 헤더 (세로로 회전)
+            ctx.save();
+            ctx.font = '10px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.fillStyle = '#1a1a1a';
+            ctx.textAlign = 'left';
+            
+            places.forEach((place, colIndex) => {
+                const x = labelWidth + cellWidth * colIndex + cellWidth / 2;
+                const y = headerHeight - 5;
+                
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(-Math.PI / 2);
+                ctx.fillText(place.장소.substring(0, 15), 0, 3);
+                ctx.restore();
+            });
+            ctx.restore();
+            
+            // 지표명 (왼쪽)
+            const metrics = ['유효폭', '기울기', '단차'];
+            ctx.font = 'bold 12px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.fillStyle = '#1a1a1a';
+            ctx.textAlign = 'right';
+            
+            metrics.forEach((metric, rowIndex) => {
+                const y = headerHeight + rowIndex * cellHeight + cellHeight / 2 + 4;
+                ctx.fillStyle = rowIndex % 2 === 0 ? '#fff' : '#f6f8fa';
+                ctx.fillRect(0, headerHeight + rowIndex * cellHeight, labelWidth, cellHeight);
+                ctx.fillStyle = '#1a1a1a';
+                ctx.fillText(metric, labelWidth - 10, y);
+            });
+            
+            // 데이터 셀 (값 없이 색상만)
+            places.forEach((place, colIndex) => {
+                const x = labelWidth + colIndex * cellWidth;
+                
+                // 유효폭
+                drawCellNoValue(ctx, place.유효폭.값, data.standards.유효폭_m, 'width',
+                    x, headerHeight, cellWidth, cellHeight);
+                
+                // 기울기
+                drawCellNoValue(ctx, place.기울기.값, data.standards.기울기_도, 'slope',
+                    x, headerHeight + cellHeight, cellWidth, cellHeight);
+                
+                // 단차
+                drawCellNoValue(ctx, place.단차.값, data.standards.단차_cm, 'step',
+                    x, headerHeight + cellHeight * 2, cellWidth, cellHeight);
+            });
+            
+            // 그리드 라인
+            ctx.strokeStyle = '#e1e4e8';
+            ctx.lineWidth = 1;
+            
+            // 세로선
+            ctx.beginPath();
+            ctx.moveTo(labelWidth, 0);
+            ctx.lineTo(labelWidth, headerHeight + cellHeight * 3);
+            ctx.stroke();
+            
+            for (let i = 0; i <= places.length; i++) {
+                const x = labelWidth + cellWidth * i;
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, headerHeight + cellHeight * 3);
+                ctx.stroke();
+            }
+            
+            // 가로선
+            ctx.beginPath();
+            ctx.moveTo(0, headerHeight);
+            ctx.lineTo(labelWidth + cellWidth * places.length, headerHeight);
+            ctx.stroke();
+            
+            for (let i = 1; i <= 3; i++) {
+                const y = headerHeight + cellHeight * i;
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(labelWidth + cellWidth * places.length, y);
+                ctx.stroke();
+            }
+            
+            // 셀 크기를 전역으로 저장 (이벤트에서 사용)
+            canvas.dataset.cellWidth = cellWidth;
+            canvas.dataset.labelWidth = labelWidth;
+            canvas.dataset.headerHeight = headerHeight;
+            canvas.dataset.cellHeight = cellHeight;
+        }
+        
+        function drawCellNoValue(ctx, value, standard, type, x, y, width, height) {
+            if (value === null) {
+                ctx.fillStyle = '#f6f8fa';
+                ctx.fillRect(x, y, width, height);
+                return;
+            }
+            
+            // 색상 결정
+            let color;
+            if (type === 'width') {
+                // 유효폭: 높을수록 좋음
+                if (value >= standard * 1.5) color = '#1f883d';
+                else if (value >= standard) color = '#56d364';
+                else if (value >= standard * 0.8) color = '#fb8500';
+                else color = '#cf222e';
+            } else {
+                // 기울기, 단차: 낮을수록 좋음
+                if (value <= standard) color = '#1f883d';
+                else if (value <= standard * 1.5) color = '#56d364';
+                else if (value <= standard * 2) color = '#fb8500';
+                else color = '#cf222e';
+            }
+            
+            ctx.fillStyle = color;
+            ctx.fillRect(x, y, width, height);
+        }
+        
+        function updateDeviationChart() {
+            const container = document.getElementById('deviationBars');
+            container.innerHTML = '';
+            
+            const metrics = [
+                { name: '유효폭', value: currentPlace.유효폭.값, deviation: currentPlace.유효폭.편차, unit: 'm', max: 5 },
+                { name: '기울기', value: currentPlace.기울기.값, deviation: currentPlace.기울기.편차, unit: '°', max: 10 },
+                { name: '단차', value: currentPlace.단차.값, deviation: currentPlace.단차.편차, unit: 'cm', max: 20 }
+            ];
+            
+            metrics.forEach(metric => {
+                if (metric.value === null) return;
+                
+                const item = document.createElement('div');
+                item.className = 'deviation-item';
+                
+                const isPositive = metric.deviation > 0;
+                const absDeviation = Math.abs(metric.deviation);
+                // 최소 8% 보장, 최대 50%
+                const percentage = Math.max(8, Math.min((absDeviation / metric.max) * 50, 50));
+                
+                // 막대가 작으면 바깥, 크면 안쪽에 배치
+                const isLarge = percentage > 35;
+                let valueStyle;
+                if (isPositive) {
+                    valueStyle = isLarge 
+                        ? 'right: 8px;' 
+                        : 'left: 100%; margin-left: 8px;';
+                } else {
+                    valueStyle = isLarge 
+                        ? 'left: 8px;' 
+                        : 'right: 100%; margin-right: 8px;';
+                }
+                
+                item.innerHTML = `
+                    <div class="deviation-label">
+                        <span class="metric-name">${metric.name}</span>
+                        <span class="metric-value">실제: ${metric.value}${metric.unit} | 편차: ${metric.deviation > 0 ? '+' : ''}${metric.deviation.toFixed(2)}${metric.unit}</span>
+                    </div>
+                    <div class="deviation-bar-wrapper">
+                        <div class="deviation-baseline"></div>
+                        <div class="deviation-bar ${isPositive ? 'positive' : 'negative'}" 
+                             style="width: ${percentage}%;">
+                            <div class="deviation-value" style="${valueStyle}">
+                                ${isPositive ? '+' : ''}${metric.deviation.toFixed(1)}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(item);
+            });
+        }
+        
+        initPlaceButtons();
+        drawHeatmap();
+        
+        // 히트맵 클릭 이벤트
+        const heatmapCanvas = document.getElementById('heatmapCanvas');
+        const tooltip = document.getElementById('heatmapTooltip');
+        
+        heatmapCanvas.addEventListener('click', (e) => {
+            const canvas = e.target;
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            const labelWidth = parseFloat(canvas.dataset.labelWidth);
+            const headerHeight = parseFloat(canvas.dataset.headerHeight);
+            const cellWidth = parseFloat(canvas.dataset.cellWidth);
+            
+            if (x < labelWidth || y < headerHeight) return;
+            
+            const colIndex = Math.floor((x - labelWidth) / cellWidth);
+            if (colIndex >= 0 && colIndex < sortedPlaces.length) {
+                const place = sortedPlaces[colIndex];
+                selectPlaceByOriginalName(place.장소);
+                
+                // 해당 장소로 스크롤
+                const btn = document.querySelector(`[data-place-name="${place.장소}"]`);
+                if (btn) {
+                    btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                }
+            }
+        });
+        
+        // 히트맵 호버 툴팁
+        heatmapCanvas.addEventListener('mousemove', (e) => {
+            const canvas = e.target;
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            const labelWidth = parseFloat(canvas.dataset.labelWidth);
+            const headerHeight = parseFloat(canvas.dataset.headerHeight);
+            const cellWidth = parseFloat(canvas.dataset.cellWidth);
+            const cellHeight = parseFloat(canvas.dataset.cellHeight);
+            
+            if (x < labelWidth || y < headerHeight) {
+                tooltip.style.display = 'none';
+                return;
+            }
+            
+            const colIndex = Math.floor((x - labelWidth) / cellWidth);
+            const rowIndex = Math.floor((y - headerHeight) / cellHeight);
+            
+            if (colIndex >= 0 && colIndex < sortedPlaces.length && rowIndex >= 0 && rowIndex < 3) {
+                const place = sortedPlaces[colIndex];
+                const metrics = ['유효폭', '기울기', '단차'];
+                const metricName = metrics[rowIndex];
+                const units = ['m', '°', 'cm'];
+                const unit = units[rowIndex];
+                
+                let value;
+                if (rowIndex === 0) value = place.유효폭.값;
+                else if (rowIndex === 1) value = place.기울기.값;
+                else value = place.단차.값;
+                
+                if (value !== null) {
+                    tooltip.innerHTML = `<strong>${place.장소}</strong><br>${metricName}: ${value}${unit}`;
+                } else {
+                    tooltip.innerHTML = `<strong>${place.장소}</strong><br>${metricName}: N/A`;
+                }
+                
+                tooltip.style.display = 'block';
+                tooltip.style.left = (e.clientX + 15) + 'px';
+                tooltip.style.top = (e.clientY + 15) + 'px';
+            } else {
+                tooltip.style.display = 'none';
+            }
+        });
+        
+        heatmapCanvas.addEventListener('mouseleave', () => {
+            tooltip.style.display = 'none';
+        });
+        
+        // 윈도우 리사이즈 시 히트맵 재그리기
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                const activeBtn = document.querySelector('.sort-btn.active');
+                if (activeBtn) {
+                    drawHeatmap(activeBtn.dataset.sort);
+                }
+            }, 200);
+        });
+        
+        // 정렬 버튼 이벤트
+        document.querySelectorAll('.sort-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                drawHeatmap(btn.dataset.sort);
+            });
+        });
+    </script>
+</body>
+</html>
