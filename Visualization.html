@@ -1703,49 +1703,92 @@ const placeDetails = {"518민주화운동기록관": {"유효폭": [{"상태": "
             var lastClickedLabel = null;
             
             document.getElementById('sunburstChart').on('plotly_click', function(eventData) {
-                var point = eventData.points[0];
-                var label = point.label;
-                var value = point.value;
-                
-                if (label === '전체' || label === 'Total' || label === lastClickedLabel) {
-                    dynamicDesc.innerHTML = "<p style='color:#888; text-align:center; margin-top:20px;'>차트를 클릭하면 상세 설명이 나옵니다.</p>";
-                    lastClickedLabel = null;
-                    return;
-                }
-                
-                lastClickedLabel = label;
-                
-                var childrenList = [];
-                for(var i=0; i<sbParents.length; i++) {
-                    if(sbParents[i] === label) {
-                        childrenList.push({
-                            name: sbLabels[i],
-                            count: sbValues[i]
-                        });
-                    }
-                }
-                
-                var html = "";
-                if (childrenList.length > 0) {
-                    html += "<h3>" + label + " 현황 분석</h3>";
-                    html += "<p>선택하신 <span class='highlight-text'>" + label + "</span> 상태에 대해 안내드리겠습니다.</p>";
-                    html += "<p>전체 항목 중 <strong>총 " + value + "곳</strong>이 해당 상태로 분류되었습니다.</p>";
-                    html += "<p>구체적인 세부 항목을 살펴보면 다음과 같습니다.</p>";
-                    html += "<ul style='margin-top:10px; padding-left:20px;'>";
-                    childrenList.forEach(function(item) {
-                        html += "<li><strong>" + item.name + ":</strong> " + item.count + "곳</li>";
-                    });
-                    html += "</ul>";
-                } else {
-                    html += "<h3>세부 항목: " + label + "</h3>";
-                    html += "<p>이 항목은 <span class='highlight-text'>" + point.parent + "</span> 상태에 속하는 <strong>" + label + "</strong> 데이터입니다.</p>";
-                    html += "<p>해당되는 건수는 <strong>총 " + value + "곳</strong>입니다.</p>";
-                }
-                
-                html += "<p style='margin-top:20px; font-size:0.9em; color:#999;'>* 가운데를 클릭하면 다시 전체 화면으로 돌아갑니다.</p>";
-                
-                dynamicDesc.innerHTML = html;
+    var point = eventData.points[0];
+    var label = point.label;
+    var value = point.value;
+    
+    if (label === '전체' || label === 'Total' || label === lastClickedLabel) {
+        dynamicDesc.innerHTML = "<p style='color:#888; text-align:center; margin-top:20px;'>차트를 클릭하면 상세 설명이 나옵니다.</p>";
+        lastClickedLabel = null;
+        return;
+    }
+    
+    lastClickedLabel = label;
+    
+    var childrenList = [];
+    for(var i=0; i<sbParents.length; i++) {
+        if(sbParents[i] === label) {
+            childrenList.push({
+                name: sbLabels[i],
+                count: sbValues[i]
             });
+        }
+    }
+    
+    var html = "";
+    
+    if (label === "양호") {
+        html += "<h3>양호</h3>";
+        html += "<p><span class='highlight-text'>양호</span> 상태는 법적 기준을 충족하여 <strong>추가 조치가 필요하지 않은</strong> 항목입니다.</p>";
+        html += "<p>전체 측정 항목 중 <strong>" + value + "곳</strong>이 양호 상태로 확인되었습니다.</p>";
+        if (childrenList.length > 0) {
+            html += "<p>양호 상태의 세부 분류는 다음과 같습니다:</p>";
+            html += "<ul style='margin-top:10px; padding-left:20px;'>";
+            childrenList.forEach(function(item) {
+                html += "<li><strong>" + item.name + ":</strong> " + item.count + "곳</li>";
+            });
+            html += "</ul>";
+        }
+        html += "<p style='margin-top:15px; color:#1f883d; font-weight:600;'>이 구역들은 현재 접근성이 양호 합니다.</p>";
+        
+    } else if (label === "개선(장기)") {
+        html += "<h3>개선(장기)</h3>";
+        html += "<p><span class='highlight-text'>개선(장기)</span> 상태는 법적 기준을 일부 충족하지 못하여 <strong>중장기적 개선이 필요한</strong> 항목입니다.</p>";
+        html += "<p>전체 측정 항목 중 <strong>" + value + "곳</strong>이 개선(장기) 상태로 분류되었습니다.</p>";
+        html += "<p style='margin-top:15px;'>주요 개선이 필요한 사항:</p>";
+        html += "<ul style='margin-top:10px; padding-left:20px;'>";
+        html += "<li>유효폭이 기준에 약간 미달하는 구간</li>";
+        html += "<li>기울기가 기준을 초과하는 경사로</li>";
+        html += "<li>단차가 2cm를 초과하는 지점</li>";
+        html += "<li>점자블록 설치가 필요한 구역</li>";
+        html += "</ul>";
+        html += "<p style='margin-top:15px; color:#fb8500; font-weight:600;'>체계적인 개선 계획 수립이 권장됩니다.</p>";
+        
+    } else if (label === "긴급조치") {
+        html += "<h3>긴급조치</h3>";
+        html += "<p><span class='highlight-text'>긴급조치</span> 상태는 법적 기준을 크게 벗어나 <strong>즉각적인 개선이 필요한</strong> 항목입니다.</p>";
+        html += "<p>전체 측정 항목 중 <strong>" + value + "곳</strong>이 긴급조치가 필요한 상태입니다.</p>";
+        html += "<p style='margin-top:15px;'>긴급 조치가 필요한 주요 이유:</p>";
+        html += "<ul style='margin-top:10px; padding-left:20px;'>";
+        html += "<li>유효폭이 기준의 80% 미만인 구간</li>";
+        html += "<li>기울기가 기준의 1.5배 이상인 급경사</li>";
+        html += "<li>심각한 단차로 인한 이동 장애</li>";
+        html += "<li>포장 상태 불량으로 안전사고 위험</li>";
+        html += "<li>점자블록 손상 또는 누락</li>";
+        html += "</ul>";
+        html += "<p style='margin-top:15px; color:#cf222e; font-weight:600;'>우선순위를 두고 신속한 개선 조치가 필요합니다.</p>";
+        
+    } else if (childrenList.length > 0) {
+        html += "<h3>" + label + " 현황 분석</h3>";
+        html += "<p>선택하신 <span class='highlight-text'>" + label + "</span> 상태에 대해 안내드리겠습니다.</p>";
+        html += "<p>전체 항목 중 <strong>총 " + value + "곳</strong>이 해당 상태로 분류되었습니다.</p>";
+        html += "<p>구체적인 세부 항목을 살펴보면 다음과 같습니다.</p>";
+        html += "<ul style='margin-top:10px; padding-left:20px;'>";
+        childrenList.forEach(function(item) {
+            html += "<li><strong>" + item.name + ":</strong> " + item.count + "곳</li>";
+        });
+        html += "</ul>";
+        
+    } else {
+        html += "<h3>세부 항목: " + label + "</h3>";
+        html += "<p>이 항목은 <span class='highlight-text'>" + point.parent + "</span> 상태에 속하는 <strong>" + label + "</strong> 데이터입니다.</p>";
+        html += "<p>해당되는 건수는 <strong>총 " + value + "곳</strong>입니다.</p>";
+    }
+    
+    html += "<p style='margin-top:20px; font-size:0.9em; color:#999;'>* 가운데를 클릭하면 다시 전체 화면으로 돌아갑니다.</p>";
+    
+    dynamicDesc.innerHTML = html;
+});
             
             const boxMX = [];
             const boxMY = [];
