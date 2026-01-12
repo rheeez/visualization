@@ -925,16 +925,20 @@
             padding: 0.5rem 0.75rem;
             border-radius: 4px;
             font-size: 11px;
-            z-index: 10000;
+            z-index: 999999;
             pointer-events: none;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-            white-space: nowrap;
+            max-width: 350px;
+            white-space: normal;
+            line-height: 1.4;
         }
 
     </style>
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 </head>
 <body>
+    <div id="dotTooltip"></div>
+
     <div class="header">
         <div class="header-bg">
             <!-- 차트 아이콘들 -->
@@ -4227,53 +4231,71 @@ const placeDetails = {
             table.innerHTML = html;
             
             // 툴팁 이벤트 리스너 추가
-            const tooltip = document.getElementById('dotTooltip');
-            const dots = table.querySelectorAll('.table-dot');
-            
-            dots.forEach(dot => {
-                dot.addEventListener('mouseenter', (e) => {
+            setTimeout(() => {
+                const tooltip = document.getElementById('dotTooltip');
+                if (!tooltip) {
+                    console.error('❌ dotTooltip not found');
+                    return;
+                }
+                
+                const dots = table.querySelectorAll('.table-dot');
+                console.log('✅ Found', dots.length, 'dots');
+                
+                dots.forEach(dot => {
+                    dot.addEventListener('mouseenter', (e) => {
                     const status = e.target.dataset.status;
                     const desc = e.target.dataset.desc;
                     
                     if (!status || !desc) return;
                     
-                    // 설명에서 핵심 값만 추출
-                    let value = desc;
+                    // 설명에서 핵심 값 추출
+                    // 순서 중요: 복합 설명(건물진입로/점자블록/포장상태)을 먼저 체크!
+                    let value = '';
                     
-                    // 유효폭
-                    const widthMatch = desc.match(/유효폭이?\s*([\d.]+)m/);
-                    if (widthMatch) {
+                    // 1. 건물진입로 - 전체 설명 (최우선!)
+                    if (desc.includes('출입문')) {
+                        value = desc;
+                    }
+                    
+                    // 2. 점자블록 - 전체 설명
+                    else if (desc.includes('점자블록')) {
+                        value = desc;
+                    }
+                    
+                    // 3. 포장상태 - 전체 설명
+                    else if (desc.includes('포장') || desc.includes('상하유격') || desc.includes('보도블럭')) {
+                        value = desc;
+                    }
+                    
+                    // 4. 유효폭 - 수치만
+                    else if (desc.match(/유효폭이\s*([\d.]+)m/)) {
+                        const widthMatch = desc.match(/유효폭이\s*([\d.]+)m/);
                         value = widthMatch[1] + 'm';
                     }
                     
-                    // 기울기
-                    const slopeMatch = desc.match(/기울기가?\s*([\d.]+)도/);
-                    if (slopeMatch) {
-                        value = slopeMatch[1] + '°';
+                    // 5. 기울기 - 수치만
+                    else if (desc.includes('기울기')) {
+                        const slopeMatch = desc.match(/기울기가?\s*([\d.]+)도/);
+                        if (slopeMatch) {
+                            value = slopeMatch[1] + '°';
+                        }
                     }
                     
-                    // 단차
-                    const stepMatch = desc.match(/단차가?\s*([\d.]+)cm/);
-                    if (stepMatch) {
-                        value = stepMatch[1] + 'cm';
+                    // 6. 단차 - 수치만
+                    else if (desc.includes('단차')) {
+                        const stepMatch = desc.match(/단차가?\s*([\d.]+)cm/);
+                        if (stepMatch) {
+                            value = stepMatch[1] + 'cm';
+                        }
                     }
                     
-                    // 점자블록
-                    if (desc.includes('점자블록이 있습니다')) {
-                        value = '있음';
-                    } else if (desc.includes('점자블록이 없습니다')) {
-                        value = '없음';
-                    } else if (desc.includes('점자블록')) {
-                        value = status;  // 상태만 표시
+                    // 기타
+                    else {
+                        value = desc;
                     }
                     
-                    // 포장상태
-                    if (desc.includes('포장') || desc.includes('보도블럭')) {
-                        value = status;
-                    }
-                    
-                    // 건물진입로
-                    if (desc.includes('출입문')) {
+                    // 값이 비어있으면 상태 표시
+                    if (!value) {
                         value = status;
                     }
                     
@@ -4293,6 +4315,7 @@ const placeDetails = {
                     tooltip.style.display = 'none';
                 });
             });
+            }, 100);  // 100ms 대기 후 실행
         }
         
         function selectPlaceFromTable(placeName) {
@@ -5025,6 +5048,6 @@ const sbValues = [
         }
 
     </script>
-<div id="dotTooltip"></div>
+
 </body>
 </html>
