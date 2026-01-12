@@ -906,13 +906,13 @@ const placeDetails = {"518민주화운동기록관": {"유효폭": [{"상태": "
             const validStep = places.filter(p => p.단차.값 !== null);
             
             const avgWidth = validWidth.length > 0 
-                ? validWidth.reduce((sum, p) => sum + p.유효폭.값, 0) / validWidth.length 
+                ? Math.round((validWidth.reduce((sum, p) => sum + p.유효폭.값, 0) / validWidth.length) * 100) / 100
                 : null;
             const avgSlope = validSlope.length > 0
-                ? validSlope.reduce((sum, p) => sum + p.기울기.값, 0) / validSlope.length
+                ? Math.round((validSlope.reduce((sum, p) => sum + p.기울기.값, 0) / validSlope.length) * 100) / 100
                 : null;
             const avgStep = validStep.length > 0
-                ? validStep.reduce((sum, p) => sum + p.단차.값, 0) / validStep.length
+                ? Math.round((validStep.reduce((sum, p) => sum + p.단차.값, 0) / validStep.length) * 100) / 100
                 : null;
             
             const standards = data.standards;
@@ -922,17 +922,17 @@ const placeDetails = {"518민주화운동기록관": {"유효폭": [{"상태": "
                 상태: status,
                 유효폭: {
                     값: avgWidth,
-                    편차: avgWidth !== null ? avgWidth - standards.유효폭_m : null,
+                    편차: avgWidth !== null ? Math.round((avgWidth - standards.유효폭_m) * 100) / 100 : null,
                     점수: null
                 },
                 기울기: {
                     값: avgSlope,
-                    편차: avgSlope !== null ? avgSlope - standards.기울기_도 : null,
+                    편차: avgSlope !== null ? Math.round((avgSlope - standards.기울기_도) * 100) / 100 : null,
                     점수: null
                 },
                 단차: {
                     값: avgStep,
-                    편차: avgStep !== null ? avgStep - standards.단차_cm : null,
+                    편차: avgStep !== null ? Math.round((avgStep - standards.단차_cm) * 100) / 100 : null,
                     점수: null
                 }
             };
@@ -1357,7 +1357,7 @@ const placeDetails = {"518민주화운동기록관": {"유효폭": [{"상태": "
                 item.innerHTML = `
                     <div class="deviation-label">
                         <span class="metric-name">${metric.name}</span>
-                        <span class="metric-value">실제: ${metric.value}${metric.unit} | 편차: ${metric.deviation > 0 ? '+' : ''}${metric.deviation.toFixed(2)}${metric.unit}</span>
+                        <span class="metric-value">실제: ${metric.value.toFixed(2)}${metric.unit} | 편차: ${metric.deviation > 0 ? '+' : ''}${metric.deviation.toFixed(2)}${metric.unit}</span>
                     </div>
                     <div class="deviation-bar-wrapper">
                         <div class="deviation-baseline"></div>
