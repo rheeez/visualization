@@ -1,0 +1,1761 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>금남로 접근성 분석</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Pretendard', 'Segoe UI', sans-serif;
+            background: #fafbfc;
+            color: #1a1a1a;
+            line-height: 1.5;
+        }
+        
+        .header {
+            background: #fff;
+            padding: 2rem;
+            text-align: center;
+            border-bottom: 1px solid #e1e4e8;
+            margin-bottom: 2rem;
+        }
+        
+        .header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 0.25rem;
+            letter-spacing: -0.02em;
+        }
+        
+        .header p {
+            font-size: 0.875rem;
+            color: #6a737d;
+            font-weight: 400;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 0 2rem 3rem;
+        }
+        
+        .standards {
+            background: #fff;
+            border: 1px solid #e1e4e8;
+            padding: 1.75rem;
+            margin-bottom: 2rem;
+        }
+        
+        .standards h2 {
+            color: #1a1a1a;
+            margin-bottom: 1.25rem;
+            font-size: 0.875rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .standards-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+        
+        .standard-item {
+            background: #f6f8fa;
+            padding: 1.5rem;
+            text-align: center;
+            border: 2px solid;
+        }
+        
+        .standard-item.width { border-color: #aaa; }
+        .standard-item.slope { border-color: #aaa; }
+        .standard-item.step { border-color: #aaa; }
+        
+        .standard-label {
+            font-size: 0.75rem;
+            color: #6a737d;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }
+        
+        .standard-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            font-variant-numeric: tabular-nums;
+        }
+        
+        .status-section {
+            background: #fff;
+            border: 1px solid #e1e4e8;
+            padding: 1.75rem;
+            margin-bottom: 2rem;
+        }
+        
+        .status-section h2 {
+            color: #1a1a1a;
+            margin-bottom: 1.25rem;
+            font-size: 0.875rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+        
+        .status-item {
+            background: #f6f8fa;
+            padding: 1.5rem;
+            text-align: center;
+            border: 2px solid;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        
+        .status-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .status-item.good { border-color: #1f883d; }
+        .status-item.mid { border-color: #fb8500; }
+        .status-item.urgent { border-color: #cf222e; }
+        
+        .status-label {
+            font-size: 0.75rem;
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }
+        
+        .status-item.good .status-label { color: #1f883d; }
+        .status-item.mid .status-label { color: #fb8500; }
+        .status-item.urgent .status-label { color: #cf222e; }
+        
+        .status-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            font-variant-numeric: tabular-nums;
+        }
+        
+        .status-desc {
+            font-size: 0.75rem;
+            color: #6a737d;
+            margin-top: 0.5rem;
+        }
+        
+        .heatmap-section {
+            background: #fff;
+            border: 1px solid #e1e4e8;
+            padding: 1.75rem 0 1.75rem 1.75rem;
+            margin-bottom: 2rem;
+        }
+        
+        .heatmap-section h2 {
+            color: #1a1a1a;
+            margin-bottom: 1.25rem;
+            font-size: 0.875rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding-right: 1.75rem;
+        }
+        
+        .heatmap-controls {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.25rem;
+            padding-right: 1.75rem;
+        }
+        
+        .sort-btn {
+            background: #f6f8fa;
+            border: 1px solid #d1d5da;
+            color: #24292f;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            transition: all 0.15s;
+        }
+        
+        .sort-btn:hover {
+            background: #e1e4e8;
+        }
+        
+        .sort-btn.active {
+            background: #0969da;
+            border-color: #0969da;
+            color: #fff;
+        }
+        
+        .heatmap-container {
+            position: relative;
+            width: 100%;
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+        
+        .heatmap-container::-webkit-scrollbar {
+            height: 8px;
+        }
+        
+        .heatmap-container::-webkit-scrollbar-track {
+            background: #f6f8fa;
+        }
+        
+        .heatmap-container::-webkit-scrollbar-thumb {
+            background: #d1d5da;
+        }
+        
+        #heatmapCanvas {
+            display: block;
+            cursor: pointer;
+        }
+        
+        .heatmap-tooltip {
+            position: fixed;
+            background: #24292f;
+            color: #fff;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.75rem;
+            pointer-events: none;
+            z-index: 1000;
+            white-space: nowrap;
+            display: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        
+        .place-selector {
+            background: #fff;
+            border: 1px solid #e1e4e8;
+            padding: 1.75rem;
+            margin-bottom: 2rem;
+        }
+        
+        .place-selector h2 {
+            color: #1a1a1a;
+            margin-bottom: 1.5rem;
+            font-size: 0.875rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .road-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            overflow-x: auto;
+            background: #fff;
+            border: 1px solid #e1e4e8;
+        }
+        
+        .road-wrapper {
+            display: flex;
+            flex-direction: column;
+            min-width: max-content;
+        }
+        
+        .side {
+            display: flex;
+            flex-direction: row;
+            min-width: max-content;
+        }
+        
+        .places-container {
+            display: flex;
+            flex-direction: row;
+            gap: 0.5rem;
+            padding: 1rem;
+            flex-wrap: nowrap;
+        }
+        
+        .road-layout::-webkit-scrollbar {
+            height: 8px;
+        }
+        
+        .road-layout::-webkit-scrollbar-track {
+            background: #f6f8fa;
+        }
+        
+        .road-layout::-webkit-scrollbar-thumb {
+            background: #d1d5da;
+        }
+        
+        .road-line {
+            display: flex;
+            align-items: center;
+            padding: 1.5rem 1rem;
+            background: linear-gradient(90deg, #57606a 0%, #6a737d 100%);
+            position: relative;
+            border-top: 1px solid #24292f;
+            border-bottom: 1px solid #24292f;
+            min-width: max-content;
+        }
+        
+        .road-line::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 2px;
+            background: repeating-linear-gradient(
+                to right,
+                #fff 0px,
+                #fff 30px,
+                transparent 30px,
+                transparent 50px
+            );
+        }
+        
+        .road-text {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: 0.5em;
+            z-index: 1;
+            text-transform: uppercase;
+            white-space: nowrap;
+            margin-left: 2rem;
+        }
+        
+        .place-btn {
+            background: #f6f8fa;
+            border: 1px solid #d1d5da;
+            color: #24292f;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-weight: 500;
+            font-size: 0.8125rem;
+            text-align: center;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        
+        .place-btn:hover {
+            border-color: #0969da;
+            background: #ddf4ff;
+            color: #0969da;
+        }
+        
+        .place-btn.active {
+            background: #0969da;
+            border-color: #0969da;
+            color: #fff;
+            font-weight: 600;
+        }
+        
+        .charts-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        
+        .chart-container {
+            background: #fff;
+            border: 1px solid #e1e4e8;
+            padding: 1.75rem;
+        }
+        
+        .chart-container h3 {
+            color: #1a1a1a;
+            margin-bottom: 1.5rem;
+            font-size: 0.875rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .gauges-wrapper {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            padding: 1.5rem 0;
+        }
+        
+        .detail-category {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #e1e4e8;
+        }
+        
+        .detail-category:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .detail-category-title {
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        
+        .detail-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+            padding: 0.5rem;
+            background: #f6f8fa;
+            border-left: 3px solid;
+        }
+        
+        .detail-item.good {
+            border-left-color: #1f883d;
+        }
+        
+        .detail-item.mid {
+            border-left-color: #fb8500;
+        }
+        
+        .detail-item.urgent {
+            border-left-color: #cf222e;
+        }
+        
+        .detail-item-status {
+            flex-shrink: 0;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 0.25rem 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        
+        .detail-item.good .detail-item-status {
+            color: #1f883d;
+            background: #dafbe1;
+        }
+        
+        .detail-item.mid .detail-item-status {
+            color: #fb8500;
+            background: #fff4e6;
+        }
+        
+        .detail-item.urgent .detail-item-status {
+            color: #cf222e;
+            background: #ffebe9;
+        }
+        
+        .detail-item-text {
+            font-size: 0.875rem;
+            color: #1a1a1a;
+            line-height: 1.5;
+        }
+        
+        .detail-empty {
+            color: #6a737d;
+            font-size: 0.875rem;
+            font-style: italic;
+        }
+        
+        .gauge-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .gauge-label {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        
+        .deviation-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 2.5rem;
+        }
+        
+        .deviation-item {
+            position: relative;
+        }
+        
+        .deviation-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .metric-name {
+            font-weight: 700;
+            color: #1a1a1a;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        
+        .metric-value {
+            color: #6a737d;
+            font-size: 0.8125rem;
+            font-variant-numeric: tabular-nums;
+            font-weight: 600;
+        }
+        
+        .deviation-bar-wrapper {
+            position: relative;
+            height: 64px;
+            background: #f6f8fa;
+            overflow: visible;
+            border: 2px solid #e1e4e8;
+        }
+        
+        .deviation-baseline {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #24292f;
+            z-index: 2;
+        }
+        
+        .deviation-baseline::before {
+            content: '기준';
+            position: absolute;
+            top: -24px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.6875rem;
+            color: #24292f;
+            white-space: nowrap;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .deviation-bar {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            transition: all 0.3s ease;
+            min-width: 40px;
+        }
+        
+        .deviation-bar.positive {
+            left: 50%;
+            background: #1f883d;
+        }
+        
+        .deviation-bar.negative {
+            right: 50%;
+            background: #cf222e;
+        }
+        
+        .deviation-value {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #1a1a1a;
+            background: #fff;
+            padding: 0.25rem 0.75rem;
+            font-variant-numeric: tabular-nums;
+            border: 2px solid #1a1a1a;
+        }
+        
+        @media (max-width: 1024px) {
+            .status-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .road-layout {
+                flex-direction: column;
+            }
+            
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .gauges-wrapper {
+                grid-template-columns: 1fr;
+            }
+            
+            .standards-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    
+        /* Plotly 차트 섹션 */
+        .plotly-section {
+            background: #fff;
+            border: 1px solid #e1e4e8;
+            padding: 1.75rem;
+            margin-bottom: 2rem;
+        }
+        
+        .plotly-section h2 {
+            color: #1a1a1a;
+            margin-bottom: 1.25rem;
+            font-size: 0.875rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .plotly-chart-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .plotly-chart-box {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 15px;
+            flex: 3;
+            min-width: 300px;
+            min-height: 450px;
+        }
+        
+        .plotly-desc-box {
+            flex: 1;
+            background: #f8f9fa;
+            border: 1px solid #e1e4e8;
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-width: 250px;
+        }
+        
+        .plotly-desc-content {
+            font-size: 0.95em;
+            line-height: 1.7;
+            color: #444;
+        }
+        
+        .plotly-desc-content h3 {
+            color: #5C6BC0;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+        
+        .plotly-desc-content .highlight-text {
+            font-weight: 600;
+            color: #2c3e50;
+            background-color: #e8f5e9;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+        
+        .plotly-full-width {
+            min-height: 600px;
+        }
+        
+        .plotly-section-title {
+            font-size: 1.1em;
+            font-weight: 700;
+            color: #2c3e50;
+            margin: 30px 0 15px 0;
+            padding-left: 15px;
+            border-left: 5px solid #5C6BC0;
+        }
+
+    </style>
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+</head>
+<body>
+    <div class="header">
+        <h1>금남로 접근성 분석</h1>
+        <p>민주광장 ↔ 금남로공원 무장애거리 조성</p>
+    </div>
+    
+    <div class="container">
+
+        <!-- Plotly 차트 섹션 -->
+        <div class="plotly-section">
+            <h2>📊 데이터 시각화 분석</h2>
+            
+            <!-- 섹션 1: Sunburst 차트 -->
+            <div class="plotly-section-title">1. 전체 접근성 현황 계층 구조</div>
+            <div class="plotly-chart-row">
+                <div id="sunburstChart" class="plotly-chart-box"></div>
+                
+                <div class="plotly-desc-box">
+                    <div id="dynamicDesc" class="plotly-desc-content">
+                        <p style="color:#888; text-align:center;">
+                            👈 왼쪽 차트에서 <strong>'상태'</strong>나 <strong>'항목'</strong>을 클릭하면<br>
+                            상세한 분석 내용이 여기에 표시됩니다.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 섹션 2: Box Plot 차트들 -->
+            <div class="plotly-section-title">2. 항목별 측정 수치 상세 분석</div>
+            <div class="plotly-chart-row">
+                <div id="boxChartM" class="plotly-chart-box"></div>
+                <div id="boxChartCm" class="plotly-chart-box"></div>
+                <div id="boxChartDeg" class="plotly-chart-box"></div>
+            </div>
+        </div>
+
+
+        <div class="standards">
+            <h2>접근성 기준</h2>
+            <div class="standards-grid">
+                <div class="standard-item width">
+                    <div class="standard-label">유효폭</div>
+                    <div class="standard-value">1.2m</div>
+                </div>
+                <div class="standard-item slope">
+                    <div class="standard-label">기울기</div>
+                    <div class="standard-value">4.8°</div>
+                </div>
+                <div class="standard-item step">
+                    <div class="standard-label">단차</div>
+                    <div class="standard-value">2.0cm</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="status-section">
+            <h2>상태별 현황 (클릭하여 보기)<span id="statusInfo" style="font-size: 0.75rem; color: #6a737d; font-weight: 400; margin-left: 1rem;"></span></h2>
+            <div class="status-grid">
+                <div class="status-item good" onclick="filterByStatus('양호')">
+                    <div class="status-label">양호</div>
+                    <div class="status-value" id="statusGood">-</div>
+                    <div class="status-desc">기준 충족</div>
+                </div>
+                <div class="status-item mid" onclick="filterByStatus('개선(장기)')">
+                    <div class="status-label">개선(장기)</div>
+                    <div class="status-value" id="statusMid">-</div>
+                    <div class="status-desc">중장기 개선 필요</div>
+                </div>
+                <div class="status-item urgent" onclick="filterByStatus('긴급조치')">
+                    <div class="status-label">긴급조치</div>
+                    <div class="status-value" id="statusUrgent">-</div>
+                    <div class="status-desc">즉시 조치 필요</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="heatmap-section">
+            <h2>전체 장소 접근성 현황</h2>
+            <div class="heatmap-controls">
+                <button class="sort-btn active" data-sort="none">전체</button>
+                <button class="sort-btn" data-sort="width">유효폭순</button>
+                <button class="sort-btn" data-sort="slope">기울기순</button>
+                <button class="sort-btn" data-sort="step">단차순</button>
+            </div>
+            <div class="heatmap-container">
+                <canvas id="heatmapCanvas"></canvas>
+            </div>
+        </div>
+        
+        <div class="heatmap-tooltip" id="heatmapTooltip"></div>
+        
+        <div class="place-selector">
+            <h2>장소 선택</h2>
+            <div class="road-layout">
+                <div class="road-wrapper">
+                    <div class="side">
+                        <div class="places-container" id="north-places"></div>
+                    </div>
+                    
+                    <div class="road-line">
+                        <div class="road-text">금남로</div>
+                    </div>
+                    
+                    <div class="side">
+                        <div class="places-container" id="south-places"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="charts-section">
+            <div class="chart-container">
+                <h3>상세 정보</h3>
+                <div id="detailInfo" style="padding: 1rem 0;">
+                    <div style="color: #6a737d; text-align: center; padding: 2rem;">
+                        장소를 선택하세요
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <h3>편차 차트</h3>
+                <div class="deviation-bars" id="deviationBars"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const data = {"standards": {"유효폭_m": 1.2, "기울기_도": 4.8, "단차_cm": 2.0}, "places": [{"장소": "투썸플레이스", "상태": "양호", "측정지점수": 7, "유효폭": {"값": 2.22, "편차": 1.02, "적합": "적합"}, "기울기": {"값": 4.2, "편차": -0.6, "적합": "적합"}, "단차": {"값": null, "편차": null, "적합": null}, "상세정보": {"유효폭": [{"상태": "양호", "설명": "유효폭 1.5m"}, {"상태": "양호", "설명": "유효폭 1.9m"}, {"상태": "양호", "설명": "유효폭 3.4m"}, {"상태": "양호", "설명": "유효폭 2.9m"}], "기울기/단차": [{"상태": "양호", "설명": "기울기 3.6도"}], "점자블록": [{"상태": "개선(장기)", "설명": "차량 출입로에 점자블록이 없으므로 출차주의등이 필요합니다."}], "포장상태": [], "건물진입로": [{"상태": "양호", "설명": "기울기 4.8도, 유효폭 1.4m, 출입문 1.8m(자동문)"}]}, "위치": "북쪽"}, {"장소": "금남로공원", "상태": "양호", "측정지점수": 11, "유효폭": {"값": 3.25, "편차": 2.05, "적합": "적합"}, "기울기": {"값": 2.4, "편차": -2.4, "적합": "적합"}, "단차": {"값": null, "편차": null, "적합": null}, "상세정보": {"유효폭": [{"상태": "양호", "설명": "유효폭 3.6m"}, {"상태": "양호", "설명": "유효폭 2.4m"}, {"상태": "양호", "설명": "유효폭 9.0m"}, {"상태": "양호", "설명": "유효폭 3.7m"}, {"상태": "양호", "설명": "유효폭 2.3m"}, {"상태": "양호", "설명": "유효폭 2.3m"}, {"상태": "양호", "설명": "유효폭 1.5m"}, {"상태": "양호", "설명": "유효폭 1.2m"}], "기울기/단차": [{"상태": "양호", "설명": "기울기 2.4도"}], "점자블록": [{"상태": "양호", "설명": "점자블록이 있습니다."}, {"상태": "양호", "설명": "점자블록이 있습니다."}], "포장상태": [], "건물진입로": []}, "위치": "북쪽"}, {"장소": "SC제일은행", "상태": "긴급조치", "측정지점수": 9, "유효폭": {"값": 1.88, "편차": 0.68, "적합": "적합"}, "기울기": {"값": 8.8, "편차": 4.0, "적합": "부적합"}, "단차": {"값": 0.1, "편차": -1.9, "적합": "적합"}, "상세정보": {"유효폭": [{"상태": "양호", "설명": "유효폭 1.5m"}, {"상태": "양호", "설명": "유효폭 4.3m"}, {"상태": "양호", "설명": "유효폭 1.5m"}], "기울기/단차": [], "점자블록": [{"상태": "긴급조치", "설명": "건물 진입로 앞 점자블록이 없습니다."}, {"상태": "양호", "설명": "점자블럭이 있습니다."}], "포장상태": [{"상태": "양호", "설명": "상하유격이 0.1cm입니다."}, {"상태": "긴급조치", "설명": "포장 상태가 불량입니다."}], "건물진입로": [{"상태": "긴급조치", "설명": "기울기 9.7도, 유효폭 1.0m, 출입문 1.9m(여닫이)"}, {"상태": "개선(장기)", "설명": "기울기 7.9도, 유효폭 1.1m, 출입문 1.9m(여닫이)"}]}, "위치": "북쪽"}, {"장소": "우리은행", "상태": "긴급조치", "측정지점수": 10, "유효폭": {"값": 2.0, "편차": 0.8, "적합": "적합"}, "기울기": {"값": 6.67, "편차": 1.88, "적합": "부적합"}, "단차": {"값": null, "편차": null, "적합": null}, "상세정보": {"유효폭": [{"상태": "양호", "설명": "유효폭 1.9m"}, {"상태": "양호", "설명": "유효폭 2.2m"}, {"상태": "양호", "설명": "유효폭 4.5m"}, {"상태": "양호", "설명": "유효폭 1.5m"}], "기울기/단차": [{"상태": "긴급조치", "설명": "기울기 9.2도"}, {"상태": "양호", "설명": "기울기 1.4도"}], "점자블록": [{"상태": "양호", "설명": "점자블록이 있습니다."}], "포장상태": [{"상태": "긴급조치", "설명": "포장 상태가 불량입니다."}], "건물진입로": [{"상태": "긴급조치", "설명": "기울기 8.8도, 유효폭 0.9m, 출입문 1.8m(여닫이)"}, {"상태": "개선(장기)", "설명": "기울기 7.3도, 유효폭 1.0m, 출입문 1.8m(여닫이)"}]}, "위치": "북쪽"}, {"장소": "흥국화재빌딩", "상태": "개선(장기)", "측정지점수": 6, "유효폭": {"값": 2.37, "편차": 1.17, "적합": "적합"}, "기울기": {"값": 5.6, "편차": 0.8, "적합": "부적합"}, "단차": {"값": null, "편차": null, "적합": null}, "상세정보": {"유효폭": [{"상태": "양호", "설명": "유효폭 1.5m"}, {"상태": "양호", "설명": "유효폭 3.6m"}], "기울기/단차": [{"상태": "개선(장기)", "설명": "기울기 6.7도"}, {"상태": "양호", "설명": "기울기 4.5도"}], "점자블록": [{"상태": "양호", "설명": "점자블럭이 있습니다."}], "포장상태": [], "건물진입로": [{"상태": "양호", "설명": "유효폭 2.0m, 출입문 2.0m(여닫이)"}]}, "위치": "북쪽"}, {"장소": "금고제작소", "상태": "개선(장기)", "측정지점수": 2, "유효폭": {"값": 1.0, "편차": -0.2, "적합": "부적합"}, "기울기": {"값": 3.95, "편차": -0.85, "적합": "적합"}, "단차": {"값": null, "편차": null, "적합": null}, "상세정보": {"유효폭": [], "기울기/단차": [{"상태": "양호", "설명": "기울기 3.6도"}], "점자블록": [], "포장상태": [], "건물진입로": [{"상태": "개선(장기)", "설명": "기울기 4.3도, 유효폭 1.0m, 출입문 1.0m(여닫이)"}]}, "위치": "북쪽"}, {"장소": "SKT", "상태": "개선(장기)", "측정지점수": 9, "유효폭": {"값": 1.8, "편차": 0.6, "적합": "적합"}, "기울기": {"값": 5.85, "편차": 1.05, "적합": "부적합"}, "단차": {"값": null, "편차": null, "적합": null}, "상세정보": {"유효폭": [{"상태": "양호", "설명": "유효폭 1.8m"}, {"상태": "양호", "설명": "유효폭 1.5m"}, {"상태": "양호", "설명": "유효폭 2.1m"}], "기울기/단차": [{"상태": "양호", "설명": "기울기 3.7도"}, {"상태": "개선(장기)", "설명": "기울기 8.0도"}], "점자블록": [{"상태": "양호", "설명": "점자블록이 있습니다."}, {"상태": "개선(장기)", "설명": "점자블록 위에 하수구가 있습니다."}], "포장상태": [], "건물진입로": []}, "위치": "북쪽"}, {"장소": "YMCA", "상태": "긴급조치", "측정지점수": 9, "유효폭": {"값": 2.66, "편차": 1.46, "적합": "적합"}, "기울기": {"값": 5.0, "편차": 0.2, "적합": "부적합"}, "단차": {"값": 4.65, "편차": 2.65, "적합": "부적합"}, "상세정보": {"유효폭": [{"상태": "양호", "설명": "유효폭 3.8m"}, {"상태": "양호", "설명": "유효폭 4.1m"}], "기울기/단차": [], "점자블록": [{"상태": "양호", "설명": "점자블록이 있습니다."}], "포장상태": [], "건물진입로": [{"상태": "긴급조치", "설명": "기울기 8.3도, 유효폭 0.9m, 출입문 1.0m(자동문)"}, {"상태": "긴급조치", "설명": "기울기 8.3도, 유효폭 0.9m, 출입문 0.9m(여닫이)"}, {"상태": "양호", "설명": "기울기 3.5도, 유효폭 3.9m, 출입문 1.7m(자동문)"}, {"상태": "양호", "설명": "기울기 3.6도, 유효폭 3.4m, 출입문 3.4m"}, {"상태": "양호", "설명": "기울기 3.6도, 유효폭 3.4m, 출입문 1.8m(여닫이)"}, {"상태": "긴급조치", "설명": "기울기 2.7도, 유효폭 0.9m"}]}, "위치": "북쪽"}, {"장소": "풀덤", "상태": "양호", "측정지점수": 1, "유효폭": {"값": 1.2, "편차": 0.0, "적합": "적합"}, "기울기": {"값": 3.5, "편차": -1.3, "적합": "적합"}, "단차": {"값": null, "편차": null, "적합": null}, "상세정보": {"유효폭": [], "기울기/단차": [], "점자블록": [], "포장상태": [], "건물진입로": [{"상태": "양호", "설명": "기울기 3.5도, 유효폭 1.2m, 출입문 1.2m(여닫이)"}]}, "위치": "북쪽"}, {"장소": "노스페이스", "상태": "개선(장기)", "측정지점수": 6, "유효폭": {"값": 3.67, "편차": 2.47, "적합": "적합"}, "기울기": {"값": 1.4, "편차": -3.4, "적합": "적합"}, "단차": {"값": null, "편차": null, "적합": null}, "상세정보": {"유효폭": [{"상태": "양호", "설명": "유효폭 6.9m"}, {"상태": "양호", "설명": "유효폭 5.3m"}, {"상태": "개선(장기)", "설명": "유효폭 1.1m"}], "기울기/단차": [], "점자블록": [{"상태": "양호", "설명": "점자블록이 있습니다."}, {"상태": "양호", "설명": "점자블록이 있습니다."}], "포장상태": [], "건물진입로": [{"상태": "양호", "설명": "기울기 1.4도, 유효폭 1.4m, 출입문 1.8m(여닫이)"}]}, "위치": "북쪽"}, {"장소": "천하주차장", "상태": "개선(장기)", "측정지점수": 3, "유효폭": {"값": 1.3, "편차": 0.1, "적합": "적합"}, "기울기": {"값": 5.9, "편차": 1.1, "적합": "부적합"}, "단차": {"값": null, "편차": null, "적합": null}, "상세정보": {"유효폭": [{"상태": "양호", "설명": "유효폭 1.3m"}], "기울기/단차": [{"상태": "개선(장기)", "설명": "기울기 5.9도"}], "점자블록": [{"상태": "양호", "설명": "점자블록이 있습니다."}], "포장상태": [], "건물진입로": []}, "위치": "북쪽"}, {"장소": "유광빌딩", "상태": "긴급조치", "측정지점수": 7, "유효폭": {"값": 1.2, "편차": 0.0, "적합": "적합"}, "기울기": {"값": 10.0, "편차": 5.2, "적합": "부적합"}, "단차": {"값": null, "편차": null, "적합": null}, "상세정보": {"유효폭": [{"상태": "긴급조치", "설명": "유효폭 0.9m"}, {"상태": "양호", "설명": "유효폭 1.4m"}, {"상태": "양호", "설명": "유효폭 1.3m"}], "기울기/단차": [{"상태": "개선(장기)", "설명": "기울기 5.4도"}, {"상태": "개선(장기)", "설명": "기울기 7.8도"}], "점자블록": [], "포장상태": [{"상태": "긴급조치", "설명": "보도블럭 상태가 불량입니다."}], "건물진입로": [{"상태": "긴급조치", "설명": "기울기 16.8도, 유효폭 1.2m"}]}, "위치": "북쪽"}, {"장소": "아성빌딩", "상태": "개선(장기)", "측정지점수": 5, "유효폭": {"값": 1.5, "편차": 0.3, "적합": "적합"}, "기울기": {"값": 5.6, "편차": 0.8, "적합": "부적합"}, "단차": {"값": null, "편차": null, "적합": null}, "상세정보": {"유효폭": [{"상태": "양호", "설명": "유효폭 1.6m"}, {"상태": "양호", "설명": "유효폭 1.5m"}], "기울기/단차": [{"상태": "개선(장기)", "설명": "기울기 6.7도"}, {"상태": "양호", "설명": "기울기 4.5도"}], "점자블록": [], "포장상태": [], "건물진입로": [{"상태": "양호", "설명": "유효폭 1.4m, 출입문 1.4m(여닫이)"}]}, "위치": "북쪽"}, {"장소": "무등빌딩", "상태": "긴급조치", "측정지점수": 4, "유효폭": {"값": 2.32, "편차": 1.12, "적합": "적합"}, "기울기": {"값": 7.0, "편차": 2.2, "적합": "부적합"}, "단차": {"값": null, "편차": null, "적합": null}, "상세정보": {"유효폭": [{"상태": "양호", "설명": "유효폭 1.5m"}, {"상태": "양호", "설명": "유효폭 4.5m"}], "기울기/단차": [], "점자블록": [{"상태": "양호", "설명": "점자블럭이 있습니다."}], "포장상태": [], "건물진입로": [{"상태": "긴급조치", "설명": "기울기 7.0도, 유효폭 0.95m, 출입문 2.2m(여닫이)"}]}, "위치": "북쪽"}, {"장소": "TUNA", "상태": "긴급조치", "측정지점수": 6, "유효폭": {"값": 2.7, "편차": 1.5, "적합": "적합"}, "기울기": {"값": 9.1, "편차": 4.3, "적합": "부적합"}, "단차": {"값": null, "편차": null, "적합": null}, "상세정보": {"유효폭": [{"상태": "양호", "설명": "유효폭 3.7m"}, {"상태": "양호", "설명": "유효폭 1.3m"}, {"상태": "양호", "설명": "유효폭 4.3m"}, {"상태": "양호", "설명": "유효폭 1.5m"}], "기울기/단차": [{"상태": "긴급조치", "설명": "기울기 9.1도"}], "점자블록": [{"상태": "긴급조치", "설명": "버스정류장 점자블럭이 없습니다."}], "포장상태": [], "건물진입로": []}, "위치": "북쪽"}, {"장소": "SK브로드밴드", "상태": "긴급조치", "측정지점수": 3, "유효폭": {"값": 2.5, "편차": 1.3, "적합": "적합"}, "기울기": {"값": 6.6, "편차": 1.8, "적합": "부적합"}, "단차": {"값": null, "편차": null, "적합": null}, "상세정보": {"유효폭": [{"상태": "양호", "설명": "유효폭 2.2m"}, {"상태": "양호", "설명": "유효폭 4.5m"}], "기울기/단차": [], "점자블록": [], "포장상태": [], "건물진입로": [{"상태": "긴급조치", "설명": "기울기 6.6도, 유효폭 0.8m, 출입문 0.9m(여닫이)"}]}, "위치": "북쪽"}, {"장소": "NH농협은행", "상태": "긴급조치", "측정지점수": 3, "유효폭": {"값": 2.67, "편차": 1.47, "적합": "적합"}, "기울기": {"값": 16.0, "편차": 11.2, "적합": "부적합"}, "단차": {"값": 18.0, "편차": 16.0, "적합": "부적합"}, "상세정보": {"유효폭": [{"상태": "양호", "설명": "유효폭 4.1m"}], "기울기/단차": [], "점자블록": [], "포장상태": [], "건물진입로": [{"상태": "긴급조치", "설명": "유효폭 1.8m, 출입문 1.8m(여닫이)"}, {"상태": "긴급조치", "설명": "기울기 16.0도, 유효폭 2.1m, 출입문 0.8m(여닫이)"}]}, "위치": "북쪽"}, {"장소": "네이버스퀘어광주", "상태": "개선(장기)", "측정지점수": 3, "유효폭": {"값": 2.55, "편차": 1.35, "적합": "적합"}, "기울기": {"값": 7.7, "편차": 2.9, "적합": "부적합"}, "단차": {"값": null, "편차": null, "적합": null}, "상세정보": {"유효폭": [{"상태": "양호", "설명": "유효폭 3.6m"}], "기울기/단차": [], "점자블록": [{"상태": "양호", "설명": "점자블록이 있습니다."}], "포장상태": [], "건물진입로": [{"상태": "개선(장기)", "설명": "기울기 7.7도, 유효폭 1.5m, 출입문 2.5m(자동문)"}]}, "위치": "북쪽"}, {"장소": "518민주화운동기록관", "상태": "개선(장기)", "측정지점수": 6, "유효폭": {"값": 1.9, "편차": 0.7, "적합": "적합"}, "기울기": {"값": 5.8, "편차": 1.0, "적합": "부적합"}, "단차": {"값": null, "편차": null, "적합": null}, "상세정보": {"유효폭": [{"상태": "양호", "설명": "유효폭 3.2m"}, {"상태": "개선(장기)", "설명": "유효폭 1.1m"}], "기울기/단차": [{"상태": "개선(장기)", "설명": "기울기 7.6도"}], "점자블록": [{"상태": "양호", "설명": "점자블록이 있습니다."}, {"상태": "양호", "설명": "점자블록이 있습니다."}], "포장상태": [], "건물진입로": [{"상태": "양호", "설명": "기울기 4.0도, 유효폭 1.4m, 출입문 0.9m(자동문)"}]}, "위치": "북쪽"}, {"장소": "NH투자증권", "상태": "개선(장기)", "측정지점수": 4, "유효폭": {"값": 1.57, "편차": 0.37, "적합": "적합"}, "기울기": {"값": 1.0, "편차": -3.8, "적합": "적합"}, "단차": {"값": null, "편차": null, "적합": null}, "상세정보": {"유효폭": [{"상태": "개선(장기)", "설명": "유효폭 1.1m"}, {"상태": "양호", "설명": "유효폭 1.8m"}], "기울기/단차": [], "점자블록": [{"상태": "양호", "설명": "점자블록이 있습니다."}], "포장상태": [], "건물진입로": [{"상태": "양호", "설명": "기울기 1.0도, 유효폭 1.8m, 출입문 1.8m(자동문)"}]}, "위치": "북쪽"}, {"장소": "루이까스텔", "상태": "긴급조치", "측정지점수": 3, "유효폭": {"값": 2.75, "편차": 1.55, "적합": "적합"}, "기울기": {"값": null, "편차": null, "적합": null}, "단차": {"값": 21.0, "편차": 19.0, "적합": "부적합"}, "상세정보": {"유효폭": [{"상태": "양호", "설명": "유효폭 3.7m"}], "기울기/단차": [], "점자블록": [{"상태": "개선(장기)", "설명": "점자블록 위에 맨홀 뚜껑이 있습니다."}], "포장상태": [], "건물진입로": [{"상태": "긴급조치", "설명": "유효폭 1.8m, 출입문 1.8m(여닫이)"}]}, "위치": "북쪽"}, {"장소": "대한치과", "상태": "긴급조치", "측정지점수": 1, "유효폭": {"값": 1.9, "편차": 0.7, "적합": "적합"}, "기울기": {"값": null, "편차": null, "적합": null}, "단차": {"값": 18.0, "편차": 16.0, "적합": "부적합"}, "상세정보": {"유효폭": [], "기울기/단차": [], "점자블록": [], "포장상태": [], "건물진입로": [{"상태": "긴급조치", "설명": "유효폭 1.9m, 출입문 1.9m(여닫이)"}]}, "위치": "북쪽"}, {"장소": "토탈공인중개사사무소", "상태": "긴급조치", "측정지점수": 6, "유효폭": {"값": 2.05, "편차": 0.85, "적합": "적합"}, "기울기": {"값": null, "편차": null, "적합": null}, "단차": {"값": 2.37, "편차": 0.37, "적합": "부적합"}, "상세정보": {"유효폭": [{"상태": "양호", "설명": "유효폭 4.1m"}], "기울기/단차": [{"상태": "양호", "설명": "단차 1.0cm"}, {"상태": "개선(장기)", "설명": "단차 2.1cm"}], "점자블록": [], "포장상태": [], "건물진입로": [{"상태": "긴급조치", "설명": "유효폭 0.7m, 출입문 0.7m(여닫이)"}, {"상태": "양호", "설명": "유효폭 1.6m, 출입문 1.6m(자동문)"}, {"상태": "양호", "설명": "유효폭 1.8m, 출입문 1.8m(여닫이)"}]}, "위치": "북쪽"}, {"장소": "커피리나", "상태": "긴급조치", "측정지점수": 1, "유효폭": {"값": 0.9, "편차": -0.3, "적합": "부적합"}, "기울기": {"값": 2.2, "편차": -2.6, "적합": "적합"}, "단차": {"값": null, "편차": null, "적합": null}, "상세정보": {"유효폭": [], "기울기/단차": [], "점자블록": [], "포장상태": [], "건물진입로": [{"상태": "긴급조치", "설명": "기울기 2.2도, 유효폭 0.9m, 출입문 0.9m(여닫이)"}]}, "위치": "북쪽"}, {"장소": "광주시립미술관", "상태": "양호", "측정지점수": 1, "유효폭": {"값": 3.0, "편차": 1.8, "적합": "적합"}, "기울기": {"값": null, "편차": null, "적합": null}, "단차": {"값": null, "편차": null, "적합": null}, "상세정보": {"유효폭": [], "기울기/단차": [], "점자블록": [], "포장상태": [], "건물진입로": [{"상태": "양호", "설명": "유효폭 3.0m, 출입문 3.0m"}]}, "위치": "북쪽"}, {"장소": "센스플라워", "상태": "긴급조치", "측정지점수": 6, "유효폭": {"값": 2.16, "편차": 0.96, "적합": "적합"}, "기울기": {"값": null, "편차": null, "적합": null}, "단차": {"값": 6.33, "편차": 4.33, "적합": "부적합"}, "상세정보": {"유효폭": [{"상태": "양호", "설명": "유효폭 2.2m"}, {"상태": "양호", "설명": "유효폭 5.3m"}], "기울기/단차": [{"상태": "개선(장기)", "설명": "단차 3.5cm"}], "점자블록": [], "포장상태": [], "건물진입로": [{"상태": "긴급조치", "설명": "유효폭 0.9m, 출입문 0.9m(여닫이)"}, {"상태": "양호", "설명": "유효폭 1.7m, 출입문 1.7m(여닫이)"}, {"상태": "긴급조치", "설명": "유효폭 0.7m, 출입문 0.7m(여닫이)"}]}, "위치": "북쪽"}, {"장소": "아이스마트", "상태": "긴급조치", "측정지점수": 3, "유효폭": {"값": 1.8, "편차": 0.6, "적합": "적합"}, "기울기": {"값": null, "편차": null, "적합": null}, "단차": {"값": 7.0, "편차": 5.0, "적합": "부적합"}, "상세정보": {"유효폭": [{"상태": "양호", "설명": "유효폭 1.8m"}], "기울기/단차": [{"상태": "개선(장기)", "설명": "단차 2.5cm"}], "점자블록": [], "포장상태": [], "건물진입로": [{"상태": "긴급조치", "설명": "유효폭 1.8m, 출입문 1.8m(여닫이)"}]}, "위치": "북쪽"}, {"장소": "GS25금남센터시티점", "상태": "개선(장기)", "측정지점수": 4, "유효폭": {"값": 3.0, "편차": 1.8, "적합": "적합"}, "기울기": {"값": null, "편차": null, "적합": null}, "단차": {"값": 3.3, "편차": 1.3, "적합": "부적합"}, "상세정보": {"유효폭": [{"상태": "양호", "설명": "유효폭 1.7m"}, {"상태": "양호", "설명": "유효폭 5.7m"}], "기울기/단차": [{"상태": "개선(장기)", "설명": "단차 3.3cm"}], "점자블록": [], "포장상태": [], "건물진입로": [{"상태": "양호", "설명": "유효폭 1.6m, 출입문 0.9m(여닫이)"}]}, "위치": "북쪽"}, {"장소": "한국투자증권", "상태": "긴급조치", "측정지점수": 9, "유효폭": {"값": 1.9, "편차": 0.7, "적합": "적합"}, "기울기": {"값": 8.0, "편차": 3.2, "적합": "부적합"}, "단차": {"값": 18.0, "편차": 16.0, "적합": "부적합"}, "상세정보": {"유효폭": [{"상태": "양호", "설명": "유효폭 4.0m"}, {"상태": "개선(장기)", "설명": "유효폭 1.1m"}], "기울기/단차": [{"상태": "개선(장기)", "설명": "기울기 8.0도"}], "점자블록": [{"상태": "양호", "설명": "점자블록이 있습니다."}, {"상태": "양호", "설명": "점자블록이 있습니다."}], "포장상태": [{"상태": "긴급조치", "설명": "포장 상태가 불량입니다."}, {"상태": "긴급조치", "설명": "포장 상태가 불량입니다."}], "건물진입로": [{"상태": "긴급조치", "설명": "유효폭 0.8m, 출입문 0.8m(여닫이)"}, {"상태": "긴급조치", "설명": "유효폭 1.7m, 출입문 1.7m(자동문)"}]}, "위치": "북쪽"}, {"장소": "하나은행", "상태": "긴급조치", "측정지점수": 6, "유효폭": {"값": 1.55, "편차": 0.35, "적합": "적합"}, "기울기": {"값": 17.3, "편차": 12.5, "적합": "부적합"}, "단차": {"값": null, "편차": null, "적합": null}, "상세정보": {"유효폭": [{"상태": "양호", "설명": "유효폭 1.6m"}, {"상태": "양호", "설명": "유효폭 2.4m"}], "기울기/단차": [], "점자블록": [{"상태": "양호", "설명": "점자블록이 있습니다."}, {"상태": "양호", "설명": "점자블록이 있습니다."}], "포장상태": [], "건물진입로": [{"상태": "긴급조치", "설명": "기울기 8.6도, 유효폭 1.2m, 출입문 1.0m(자동문)"}, {"상태": "긴급조치", "설명": "기울기 26.0도, 유효폭 1.0m, 출입문 0.8m(여닫이)"}]}, "위치": "북쪽"}, {"장소": "전일빌딩", "상태": "양호", "측정지점수": 7, "유효폭": {"값": 3.5, "편차": 2.3, "적합": "적합"}, "기울기": {"값": null, "편차": null, "적합": null}, "단차": {"값": null, "편차": null, "적합": null}, "상세정보": {"유효폭": [{"상태": "양호", "설명": "유효폭 5.1m"}], "기울기/단차": [], "점자블록": [{"상태": "양호", "설명": "점자블록이 있습니다."}, {"상태": "양호", "설명": "점자블록이 있습니다."}], "포장상태": [{"상태": "긴급조치", "설명": "포장 상태가 불량입니다."}, {"상태": "긴급조치", "설명": "포장 상태가 불량입니다."}, {"상태": "긴급조치", "설명": "포장 상태가 불량입니다."}], "건물진입로": [{"상태": "양호", "설명": "유효폭 1.9m, 출입문 1.9m(자동문)"}]}, "위치": "북쪽"}, {"장소": "엘리베이터", "상태": "긴급조치", "측정지점수": 3, "유효폭": {"값": 1.5, "편차": 0.3, "적합": "적합"}, "기울기": {"값": 10.1, "편차": 5.3, "적합": "부적합"}, "단차": {"값": null, "편차": null, "적합": null}, "상세정보": {"유효폭": [{"상태": "양호", "설명": "유효폭 1.5m"}], "기울기/단차": [{"상태": "긴급조치", "설명": "기울기 10.1도"}], "점자블록": [{"상태": "양호", "설명": "점자블록이 있습니다."}], "포장상태": [], "건물진입로": []}, "위치": "북쪽"}, {"장소": "기타", "상태": "정보없음", "측정지점수": 1, "유효폭": {"값": null, "편차": null, "적합": null}, "기울기": {"값": null, "편차": null, "적합": null}, "단차": {"값": null, "편차": null, "적합": null}, "상세정보": {"유효폭": [], "기울기/단차": [], "점자블록": [], "포장상태": [], "건물진입로": []}, "위치": "북쪽"}], "overall": {"유효폭_평균": 2.13, "기울기_평균": 6.65, "단차_평균": 9.88, "유효폭_기준초과": 30, "기울기_기준초과": 7, "단차_기준초과": 1}};
+        
+        const placeDetails = {"투썸플레이스": {"유효폭": [{"상태": "양호", "설명": "유효폭 1.5m"}, {"상태": "양호", "설명": "유효폭 1.9m"}, {"상태": "양호", "설명": "유효폭 3.4m"}, {"상태": "양호", "설명": "유효폭 2.9m"}], "기울기/단차": [{"상태": "양호", "설명": "기울기 3.6도"}], "점자블록": [{"상태": "개선(장기)", "설명": "차량 출입로에 점자블록이 없으므로 출차주의등이 필요합니다."}], "포장상태": [], "건물진입로": [{"상태": "양호", "설명": "기울기 4.8도, 유효폭 1.4m, 출입문 1.8m(자동문)"}]}, "금남로공원": {"유효폭": [{"상태": "양호", "설명": "유효폭 3.6m"}, {"상태": "양호", "설명": "유효폭 2.4m"}, {"상태": "양호", "설명": "유효폭 9.0m"}, {"상태": "양호", "설명": "유효폭 3.7m"}, {"상태": "양호", "설명": "유효폭 2.3m"}, {"상태": "양호", "설명": "유효폭 2.3m"}, {"상태": "양호", "설명": "유효폭 1.5m"}, {"상태": "양호", "설명": "유효폭 1.2m"}], "기울기/단차": [{"상태": "양호", "설명": "기울기 2.4도"}], "점자블록": [{"상태": "양호", "설명": "점자블록이 있습니다."}, {"상태": "양호", "설명": "점자블록이 있습니다."}], "포장상태": [], "건물진입로": []}, "SC제일은행": {"유효폭": [{"상태": "양호", "설명": "유효폭 1.5m"}, {"상태": "양호", "설명": "유효폭 4.3m"}, {"상태": "양호", "설명": "유효폭 1.5m"}], "기울기/단차": [], "점자블록": [{"상태": "긴급조치", "설명": "건물 진입로 앞 점자블록이 없습니다."}, {"상태": "양호", "설명": "점자블럭이 있습니다."}], "포장상태": [{"상태": "양호", "설명": "상하유격이 0.1cm입니다."}, {"상태": "긴급조치", "설명": "포장 상태가 불량입니다."}], "건물진입로": [{"상태": "긴급조치", "설명": "기울기 9.7도, 유효폭 1.0m, 출입문 1.9m(여닫이)"}, {"상태": "개선(장기)", "설명": "기울기 7.9도, 유효폭 1.1m, 출입문 1.9m(여닫이)"}]}, "우리은행": {"유효폭": [{"상태": "양호", "설명": "유효폭 1.9m"}, {"상태": "양호", "설명": "유효폭 2.2m"}, {"상태": "양호", "설명": "유효폭 4.5m"}, {"상태": "양호", "설명": "유효폭 1.5m"}], "기울기/단차": [{"상태": "긴급조치", "설명": "기울기 9.2도"}, {"상태": "양호", "설명": "기울기 1.4도"}], "점자블록": [{"상태": "양호", "설명": "점자블록이 있습니다."}], "포장상태": [{"상태": "긴급조치", "설명": "포장 상태가 불량입니다."}], "건물진입로": [{"상태": "긴급조치", "설명": "기울기 8.8도, 유효폭 0.9m, 출입문 1.8m(여닫이)"}, {"상태": "개선(장기)", "설명": "기울기 7.3도, 유효폭 1.0m, 출입문 1.8m(여닫이)"}]}, "흥국화재빌딩": {"유효폭": [{"상태": "양호", "설명": "유효폭 1.5m"}, {"상태": "양호", "설명": "유효폭 3.6m"}], "기울기/단차": [{"상태": "개선(장기)", "설명": "기울기 6.7도"}, {"상태": "양호", "설명": "기울기 4.5도"}], "점자블록": [{"상태": "양호", "설명": "점자블럭이 있습니다."}], "포장상태": [], "건물진입로": [{"상태": "양호", "설명": "유효폭 2.0m, 출입문 2.0m(여닫이)"}]}, "금고제작소": {"유효폭": [], "기울기/단차": [{"상태": "양호", "설명": "기울기 3.6도"}], "점자블록": [], "포장상태": [], "건물진입로": [{"상태": "개선(장기)", "설명": "기울기 4.3도, 유효폭 1.0m, 출입문 1.0m(여닫이)"}]}, "SKT": {"유효폭": [{"상태": "양호", "설명": "유효폭 1.8m"}, {"상태": "양호", "설명": "유효폭 1.5m"}, {"상태": "양호", "설명": "유효폭 2.1m"}], "기울기/단차": [{"상태": "양호", "설명": "기울기 3.7도"}, {"상태": "개선(장기)", "설명": "기울기 8.0도"}], "점자블록": [{"상태": "양호", "설명": "점자블록이 있습니다."}, {"상태": "개선(장기)", "설명": "점자블록 위에 하수구가 있습니다."}], "포장상태": [], "건물진입로": []}, "YMCA": {"유효폭": [{"상태": "양호", "설명": "유효폭 3.8m"}, {"상태": "양호", "설명": "유효폭 4.1m"}], "기울기/단차": [], "점자블록": [{"상태": "양호", "설명": "점자블록이 있습니다."}], "포장상태": [], "건물진입로": [{"상태": "긴급조치", "설명": "기울기 8.3도, 유효폭 0.9m, 출입문 1.0m(자동문)"}, {"상태": "긴급조치", "설명": "기울기 8.3도, 유효폭 0.9m, 출입문 0.9m(여닫이)"}, {"상태": "양호", "설명": "기울기 3.5도, 유효폭 3.9m, 출입문 1.7m(자동문)"}, {"상태": "양호", "설명": "기울기 3.6도, 유효폭 3.4m, 출입문 3.4m"}, {"상태": "양호", "설명": "기울기 3.6도, 유효폭 3.4m, 출입문 1.8m(여닫이)"}, {"상태": "긴급조치", "설명": "기울기 2.7도, 유효폭 0.9m"}]}, "풀덤": {"유효폭": [], "기울기/단차": [], "점자블록": [], "포장상태": [], "건물진입로": [{"상태": "양호", "설명": "기울기 3.5도, 유효폭 1.2m, 출입문 1.2m(여닫이)"}]}, "노스페이스": {"유효폭": [{"상태": "양호", "설명": "유효폭 6.9m"}, {"상태": "양호", "설명": "유효폭 5.3m"}, {"상태": "개선(장기)", "설명": "유효폭 1.1m"}], "기울기/단차": [], "점자블록": [{"상태": "양호", "설명": "점자블록이 있습니다."}, {"상태": "양호", "설명": "점자블록이 있습니다."}], "포장상태": [], "건물진입로": [{"상태": "양호", "설명": "기울기 1.4도, 유효폭 1.4m, 출입문 1.8m(여닫이)"}]}, "천하주차장": {"유효폭": [{"상태": "양호", "설명": "유효폭 1.3m"}], "기울기/단차": [{"상태": "개선(장기)", "설명": "기울기 5.9도"}], "점자블록": [{"상태": "양호", "설명": "점자블록이 있습니다."}], "포장상태": [], "건물진입로": []}, "유광빌딩": {"유효폭": [{"상태": "긴급조치", "설명": "유효폭 0.9m"}, {"상태": "양호", "설명": "유효폭 1.4m"}, {"상태": "양호", "설명": "유효폭 1.3m"}], "기울기/단차": [{"상태": "개선(장기)", "설명": "기울기 5.4도"}, {"상태": "개선(장기)", "설명": "기울기 7.8도"}], "점자블록": [], "포장상태": [{"상태": "긴급조치", "설명": "보도블럭 상태가 불량입니다."}], "건물진입로": [{"상태": "긴급조치", "설명": "기울기 16.8도, 유효폭 1.2m"}]}, "아성빌딩": {"유효폭": [{"상태": "양호", "설명": "유효폭 1.6m"}, {"상태": "양호", "설명": "유효폭 1.5m"}], "기울기/단차": [{"상태": "개선(장기)", "설명": "기울기 6.7도"}, {"상태": "양호", "설명": "기울기 4.5도"}], "점자블록": [], "포장상태": [], "건물진입로": [{"상태": "양호", "설명": "유효폭 1.4m, 출입문 1.4m(여닫이)"}]}, "무등빌딩": {"유효폭": [{"상태": "양호", "설명": "유효폭 1.5m"}, {"상태": "양호", "설명": "유효폭 4.5m"}], "기울기/단차": [], "점자블록": [{"상태": "양호", "설명": "점자블럭이 있습니다."}], "포장상태": [], "건물진입로": [{"상태": "긴급조치", "설명": "기울기 7.0도, 유효폭 0.95m, 출입문 2.2m(여닫이)"}]}, "TUNA": {"유효폭": [{"상태": "양호", "설명": "유효폭 3.7m"}, {"상태": "양호", "설명": "유효폭 1.3m"}, {"상태": "양호", "설명": "유효폭 4.3m"}, {"상태": "양호", "설명": "유효폭 1.5m"}], "기울기/단차": [{"상태": "긴급조치", "설명": "기울기 9.1도"}], "점자블록": [{"상태": "긴급조치", "설명": "버스정류장 점자블럭이 없습니다."}], "포장상태": [], "건물진입로": []}, "SK브로드밴드": {"유효폭": [{"상태": "양호", "설명": "유효폭 2.2m"}, {"상태": "양호", "설명": "유효폭 4.5m"}], "기울기/단차": [], "점자블록": [], "포장상태": [], "건물진입로": [{"상태": "긴급조치", "설명": "기울기 6.6도, 유효폭 0.8m, 출입문 0.9m(여닫이)"}]}, "NH농협은행": {"유효폭": [{"상태": "양호", "설명": "유효폭 4.1m"}], "기울기/단차": [], "점자블록": [], "포장상태": [], "건물진입로": [{"상태": "긴급조치", "설명": "유효폭 1.8m, 출입문 1.8m(여닫이)"}, {"상태": "긴급조치", "설명": "기울기 16.0도, 유효폭 2.1m, 출입문 0.8m(여닫이)"}]}, "네이버스퀘어광주": {"유효폭": [{"상태": "양호", "설명": "유효폭 3.6m"}], "기울기/단차": [], "점자블록": [{"상태": "양호", "설명": "점자블록이 있습니다."}], "포장상태": [], "건물진입로": [{"상태": "개선(장기)", "설명": "기울기 7.7도, 유효폭 1.5m, 출입문 2.5m(자동문)"}]}, "518민주화운동기록관": {"유효폭": [{"상태": "양호", "설명": "유효폭 3.2m"}, {"상태": "개선(장기)", "설명": "유효폭 1.1m"}], "기울기/단차": [{"상태": "개선(장기)", "설명": "기울기 7.6도"}], "점자블록": [{"상태": "양호", "설명": "점자블록이 있습니다."}, {"상태": "양호", "설명": "점자블록이 있습니다."}], "포장상태": [], "건물진입로": [{"상태": "양호", "설명": "기울기 4.0도, 유효폭 1.4m, 출입문 0.9m(자동문)"}]}, "NH투자증권": {"유효폭": [{"상태": "개선(장기)", "설명": "유효폭 1.1m"}, {"상태": "양호", "설명": "유효폭 1.8m"}], "기울기/단차": [], "점자블록": [{"상태": "양호", "설명": "점자블록이 있습니다."}], "포장상태": [], "건물진입로": [{"상태": "양호", "설명": "기울기 1.0도, 유효폭 1.8m, 출입문 1.8m(자동문)"}]}, "루이까스텔": {"유효폭": [{"상태": "양호", "설명": "유효폭 3.7m"}], "기울기/단차": [], "점자블록": [{"상태": "개선(장기)", "설명": "점자블록 위에 맨홀 뚜껑이 있습니다."}], "포장상태": [], "건물진입로": [{"상태": "긴급조치", "설명": "유효폭 1.8m, 출입문 1.8m(여닫이)"}]}, "대한치과": {"유효폭": [], "기울기/단차": [], "점자블록": [], "포장상태": [], "건물진입로": [{"상태": "긴급조치", "설명": "유효폭 1.9m, 출입문 1.9m(여닫이)"}]}, "토탈공인중개사사무소": {"유효폭": [{"상태": "양호", "설명": "유효폭 4.1m"}], "기울기/단차": [{"상태": "양호", "설명": "단차 1.0cm"}, {"상태": "개선(장기)", "설명": "단차 2.1cm"}], "점자블록": [], "포장상태": [], "건물진입로": [{"상태": "긴급조치", "설명": "유효폭 0.7m, 출입문 0.7m(여닫이)"}, {"상태": "양호", "설명": "유효폭 1.6m, 출입문 1.6m(자동문)"}, {"상태": "양호", "설명": "유효폭 1.8m, 출입문 1.8m(여닫이)"}]}, "커피리나": {"유효폭": [], "기울기/단차": [], "점자블록": [], "포장상태": [], "건물진입로": [{"상태": "긴급조치", "설명": "기울기 2.2도, 유효폭 0.9m, 출입문 0.9m(여닫이)"}]}, "광주시립미술관": {"유효폭": [], "기울기/단차": [], "점자블록": [], "포장상태": [], "건물진입로": [{"상태": "양호", "설명": "유효폭 3.0m, 출입문 3.0m"}]}, "센스플라워": {"유효폭": [{"상태": "양호", "설명": "유효폭 2.2m"}, {"상태": "양호", "설명": "유효폭 5.3m"}], "기울기/단차": [{"상태": "개선(장기)", "설명": "단차 3.5cm"}], "점자블록": [], "포장상태": [], "건물진입로": [{"상태": "긴급조치", "설명": "유효폭 0.9m, 출입문 0.9m(여닫이)"}, {"상태": "양호", "설명": "유효폭 1.7m, 출입문 1.7m(여닫이)"}, {"상태": "긴급조치", "설명": "유효폭 0.7m, 출입문 0.7m(여닫이)"}]}, "아이스마트": {"유효폭": [{"상태": "양호", "설명": "유효폭 1.8m"}], "기울기/단차": [{"상태": "개선(장기)", "설명": "단차 2.5cm"}], "점자블록": [], "포장상태": [], "건물진입로": [{"상태": "긴급조치", "설명": "유효폭 1.8m, 출입문 1.8m(여닫이)"}]}, "GS25금남센터시티점": {"유효폭": [{"상태": "양호", "설명": "유효폭 1.7m"}, {"상태": "양호", "설명": "유효폭 5.7m"}], "기울기/단차": [{"상태": "개선(장기)", "설명": "단차 3.3cm"}], "점자블록": [], "포장상태": [], "건물진입로": [{"상태": "양호", "설명": "유효폭 1.6m, 출입문 0.9m(여닫이)"}]}, "한국투자증권": {"유효폭": [{"상태": "양호", "설명": "유효폭 4.0m"}, {"상태": "개선(장기)", "설명": "유효폭 1.1m"}], "기울기/단차": [{"상태": "개선(장기)", "설명": "기울기 8.0도"}], "점자블록": [{"상태": "양호", "설명": "점자블록이 있습니다."}, {"상태": "양호", "설명": "점자블록이 있습니다."}], "포장상태": [{"상태": "긴급조치", "설명": "포장 상태가 불량입니다."}, {"상태": "긴급조치", "설명": "포장 상태가 불량입니다."}], "건물진입로": [{"상태": "긴급조치", "설명": "유효폭 0.8m, 출입문 0.8m(여닫이)"}, {"상태": "긴급조치", "설명": "유효폭 1.7m, 출입문 1.7m(자동문)"}]}, "하나은행": {"유효폭": [{"상태": "양호", "설명": "유효폭 1.6m"}, {"상태": "양호", "설명": "유효폭 2.4m"}], "기울기/단차": [], "점자블록": [{"상태": "양호", "설명": "점자블록이 있습니다."}, {"상태": "양호", "설명": "점자블록이 있습니다."}], "포장상태": [], "건물진입로": [{"상태": "긴급조치", "설명": "기울기 8.6도, 유효폭 1.2m, 출입문 1.0m(자동문)"}, {"상태": "긴급조치", "설명": "기울기 26.0도, 유효폭 1.0m, 출입문 0.8m(여닫이)"}]}, "전일빌딩": {"유효폭": [{"상태": "양호", "설명": "유효폭 5.1m"}], "기울기/단차": [], "점자블록": [{"상태": "양호", "설명": "점자블록이 있습니다."}, {"상태": "양호", "설명": "점자블록이 있습니다."}], "포장상태": [{"상태": "긴급조치", "설명": "포장 상태가 불량입니다."}, {"상태": "긴급조치", "설명": "포장 상태가 불량입니다."}, {"상태": "긴급조치", "설명": "포장 상태가 불량입니다."}], "건물진입로": [{"상태": "양호", "설명": "유효폭 1.9m, 출입문 1.9m(자동문)"}]}, "엘리베이터": {"유효폭": [{"상태": "양호", "설명": "유효폭 1.5m"}], "기울기/단차": [{"상태": "긴급조치", "설명": "기울기 10.1도"}], "점자블록": [{"상태": "양호", "설명": "점자블록이 있습니다."}], "포장상태": [], "건물진입로": []}, "기타": {"유효폭": [], "기울기/단차": [], "점자블록": [], "포장상태": [], "건물진입로": []}};
+        
+        let currentPlace = null;
+        let sortedPlaces = [];
+        
+        const nameMap = {
+            'GS25금남센터시티점': 'GS25',
+            '네이버스퀘어광주': '네이버파트너스퀘어광주',
+            '토탈공인중개사사무소': '토탈공인중개사무소',
+            '우리은행': '(구)우리은행',
+            '흥국화재빌딩': '흥국화재',
+            '금고제작소': 'OK금고제작소',
+            '아성빌딩': '아송빌딩',
+            'TUNA': 'LGU+'
+        };
+        
+        const northOrder = [
+            'SK브로드밴드', 'NH농협은행', '네이버파트너스퀘어광주', '518민주화운동기록관',
+            'NH투자증권', '루이까스텔', '대한치과', '토탈공인중개사무소',
+            '커피리나', '광주시립미술관', '센스플라워', '아이스마트',
+            'GS25', '한국투자증권(서)', '한국투자증권(동)', '하나은행(서)',
+            '하나은행(동)', '전일빌딩(서)', '전일빌딩(동)', '엘리베이터'
+        ];
+        
+        const southOrder = [
+            '금남로공원', '투썸플레이스', 'SC제일은행', '(구)우리은행',
+            '흥국화재', 'OK금고제작소', '유광빌딩', '아송빌딩',
+            '무등빌딩', 'LGU+', 'SKT', 'YMCA',
+            '풀덤', '노스페이스', '천하주차장', '엘리베이터'
+        ];
+        
+        function findPlaceByDisplayName(displayName) {
+            for (const [original, mapped] of Object.entries(nameMap)) {
+                if (mapped === displayName) {
+                    return data.places.find(p => p.장소 === original);
+                }
+            }
+            return data.places.find(p => p.장소 === displayName);
+        }
+        
+        let currentFilteredPlaces = [];
+        let currentFilterIndex = 0;
+        
+        // 상태별 필터링
+        function filterByStatus(status) {
+            let filteredPlaces = data.places.filter(place => {
+                if (status === '긴급조치') {
+                    return place.상태.includes('긴급') || place.상태.includes('긁급');
+                } else if (status === '개선(장기)') {
+                    return place.상태.includes('개선');
+                } else {
+                    return place.상태 === status;
+                }
+            });
+            
+            if (filteredPlaces.length === 0) {
+                alert(`${status} 상태의 장소가 없습니다.`);
+                return;
+            }
+            
+            // 현재 필터 상태 저장
+            currentFilteredPlaces = filteredPlaces;
+            currentFilterIndex = 0;
+            
+            // 모든 해당 장소 버튼 active 표시
+            document.querySelectorAll('.place-btn').forEach(btn => {
+                const isFiltered = filteredPlaces.some(p => p.장소 === btn.dataset.placeName);
+                btn.classList.toggle('active', isFiltered);
+            });
+            
+            // 평균값 계산
+            const avgPlace = calculateAverageForPlaces(filteredPlaces, status);
+            currentPlace = avgPlace;
+            
+            // 상세 정보 업데이트 - 해당 상태 전체 요약
+            updateDetailInfoForMultiplePlaces(filteredPlaces, status);
+            
+            // 편차 차트 업데이트 - 평균값
+            updateDeviationChart();
+            
+            // 장소 선택 섹션으로 스크롤
+            document.querySelector('.place-selector').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // 상태 정보 표시 제거 (평균값 표시하므로)
+            const header = document.querySelector('.place-selector h2');
+            if (header) {
+                header.textContent = `장소 선택`;
+            }
+        }
+        
+        function calculateAverageForPlaces(places, status) {
+            const validWidth = places.filter(p => p.유효폭.값 !== null);
+            const validSlope = places.filter(p => p.기울기.값 !== null);
+            const validStep = places.filter(p => p.단차.값 !== null);
+            
+            const avgWidth = validWidth.length > 0 
+                ? validWidth.reduce((sum, p) => sum + p.유효폭.값, 0) / validWidth.length 
+                : null;
+            const avgSlope = validSlope.length > 0
+                ? validSlope.reduce((sum, p) => sum + p.기울기.값, 0) / validSlope.length
+                : null;
+            const avgStep = validStep.length > 0
+                ? validStep.reduce((sum, p) => sum + p.단차.값, 0) / validStep.length
+                : null;
+            
+            const standards = data.standards;
+            
+            return {
+                장소: `${status} (${places.length}개 평균)`,
+                상태: status,
+                유효폭: {
+                    값: avgWidth,
+                    편차: avgWidth !== null ? avgWidth - standards.유효폭_m : null,
+                    점수: null
+                },
+                기울기: {
+                    값: avgSlope,
+                    편차: avgSlope !== null ? avgSlope - standards.기울기_도 : null,
+                    점수: null
+                },
+                단차: {
+                    값: avgStep,
+                    편차: avgStep !== null ? avgStep - standards.단차_cm : null,
+                    점수: null
+                }
+            };
+        }
+        
+        function updateDetailInfoForMultiplePlaces(places, status) {
+            const container = document.getElementById('detailInfo');
+            
+            // 상태별 색상
+            const statusColor = status === '양호' ? '#1f883d' : (status.includes('긁급') || status.includes('긴급') ? '#cf222e' : '#fb8500');
+            
+            let html = `
+                <div style="margin-bottom: 1.5rem; padding: 1rem; background: #f6f8fa; border-left: 4px solid ${statusColor};">
+                    <div style="font-size: 1rem; font-weight: 700; color: #1a1a1a; margin-bottom: 0.5rem;">
+                        ${status} - ${places.length}개 장소 평균
+                    </div>
+                    <div style="font-size: 0.875rem; color: #6a737d; line-height: 1.6;">
+                        ${places.map(p => p.장소).join(', ')}
+                    </div>
+                </div>
+            `;
+            
+            // 각 장소별 상세 정보 요약
+            const allDetails = places.map(p => {
+                const details = placeDetails[p.장소];
+                return { name: p.장소, details };
+            }).filter(item => item.details);
+            
+            if (allDetails.length > 0) {
+                html += '<div class="detail-category">';
+                html += '<div class="detail-category-title">주요 개선 필요 항목</div>';
+                
+                let issueCount = 0;
+                allDetails.forEach(item => {
+                    const issues = [];
+                    
+                    item.details['포장상태'].forEach(i => {
+                        if (i.상태 !== '양호') issues.push({ cat: '포장', text: i.설명, status: i.상태 });
+                    });
+                    item.details['점자블록'].forEach(i => {
+                        if (i.상태 !== '양호') issues.push({ cat: '점자', text: i.설명, status: i.상태 });
+                    });
+                    item.details['건물진입로'].forEach(i => {
+                        if (i.상태 !== '양호') issues.push({ cat: '진입', text: i.설명, status: i.상태 });
+                    });
+                    
+                    if (issues.length > 0 && issueCount < 10) {
+                        issues.forEach(issue => {
+                            if (issueCount < 10) {
+                                const itemStatusClass = issue.status === '양호' ? 'good' : (issue.status.includes('긴급') ? 'urgent' : 'mid');
+                                html += `
+                                    <div class="detail-item ${itemStatusClass}" style="margin-bottom: 0.5rem;">
+                                        <div class="detail-item-status">${item.name}</div>
+                                        <div class="detail-item-text">[${issue.cat}] ${issue.text}</div>
+                                    </div>
+                                `;
+                                issueCount++;
+                            }
+                        });
+                    }
+                });
+                
+                if (issueCount === 0) {
+                    html += '<div class="detail-empty">개선이 필요한 항목이 없습니다.</div>';
+                }
+                
+                html += '</div>';
+            } else {
+                html += '<div class="detail-empty">상세 정보가 없습니다.</div>';
+            }
+            
+            container.innerHTML = html;
+        }
+        
+        // 상태별 통계 계산
+        function updateStatusStats() {
+            const statusCounts = {
+                '양호': 0,
+                '개선(장기)': 0,
+                '긴급조치': 0,
+                '긁급': 0
+            };
+            
+            data.places.forEach(place => {
+                const status = place.상태;
+                if (statusCounts.hasOwnProperty(status)) {
+                    statusCounts[status]++;
+                } else if (status.includes('긴급') || status.includes('긁급')) {
+                    statusCounts['긴급조치']++;
+                } else if (status.includes('개선')) {
+                    statusCounts['개선(장기)']++;
+                } else {
+                    statusCounts['양호']++;
+                }
+            });
+            
+            document.getElementById('statusGood').textContent = statusCounts['양호'];
+            document.getElementById('statusMid').textContent = statusCounts['개선(장기)'];
+            document.getElementById('statusUrgent').textContent = statusCounts['긴급조치'] + statusCounts['긁급'];
+        }
+        
+        // 히트맵 그리기
+        function drawHeatmap(sortBy = 'none') {
+            const canvas = document.getElementById('heatmapCanvas');
+            const container = canvas.parentElement;
+            const ctx = canvas.getContext('2d');
+            
+            let places = [...data.places].filter(p => {
+                const hasWidth = p.유효폭.값 !== null;
+                const hasSlope = p.기울기.값 !== null;
+                const hasStep = p.단차.값 !== null;
+                const count = (hasWidth ? 1 : 0) + (hasSlope ? 1 : 0) + (hasStep ? 1 : 0);
+                return count >= 2;
+            });
+            
+            if (sortBy === 'width') {
+                places.sort((a, b) => (b.유효폭.값 || 0) - (a.유효폭.값 || 0));
+            } else if (sortBy === 'slope') {
+                places.sort((a, b) => (a.기울기.값 || 999) - (b.기울기.값 || 999));
+            } else if (sortBy === 'step') {
+                places.sort((a, b) => (a.단차.값 || 999) - (b.단차.값 || 999));
+            }
+            
+            sortedPlaces = places;
+            
+            const containerWidth = container.clientWidth;
+            const labelWidth = 80;
+            const headerHeight = 120;
+            const cellHeight = 50;
+            const availableWidth = containerWidth - labelWidth - 20;
+            const cellWidth = Math.max(25, Math.min(40, availableWidth / places.length));
+            
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = (labelWidth + cellWidth * places.length) * dpr;
+            canvas.height = (headerHeight + cellHeight * 3) * dpr;
+            canvas.style.width = (labelWidth + cellWidth * places.length) + 'px';
+            canvas.style.height = (headerHeight + cellHeight * 3) + 'px';
+            ctx.scale(dpr, dpr);
+            
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 0, labelWidth + cellWidth * places.length, headerHeight + cellHeight * 3);
+            
+            ctx.fillStyle = '#f6f8fa';
+            ctx.fillRect(0, 0, labelWidth + cellWidth * places.length, headerHeight);
+            
+            ctx.save();
+            ctx.font = '10px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.fillStyle = '#1a1a1a';
+            ctx.textAlign = 'left';
+            
+            places.forEach((place, colIndex) => {
+                const x = labelWidth + cellWidth * colIndex + cellWidth / 2;
+                const y = headerHeight - 5;
+                
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(-Math.PI / 2);
+                ctx.fillText(place.장소.substring(0, 15), 0, 3);
+                ctx.restore();
+            });
+            ctx.restore();
+            
+            const metrics = ['유효폭', '기울기', '단차'];
+            ctx.font = 'bold 12px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.fillStyle = '#1a1a1a';
+            ctx.textAlign = 'right';
+            
+            metrics.forEach((metric, rowIndex) => {
+                const y = headerHeight + rowIndex * cellHeight + cellHeight / 2 + 4;
+                ctx.fillStyle = rowIndex % 2 === 0 ? '#fff' : '#f6f8fa';
+                ctx.fillRect(0, headerHeight + rowIndex * cellHeight, labelWidth, cellHeight);
+                ctx.fillStyle = '#1a1a1a';
+                ctx.fillText(metric, labelWidth - 10, y);
+            });
+            
+            places.forEach((place, colIndex) => {
+                const x = labelWidth + colIndex * cellWidth;
+                
+                drawCellNoValue(ctx, place.유효폭.값, data.standards.유효폭_m, 'width',
+                    x, headerHeight, cellWidth, cellHeight);
+                
+                drawCellNoValue(ctx, place.기울기.값, data.standards.기울기_도, 'slope',
+                    x, headerHeight + cellHeight, cellWidth, cellHeight);
+                
+                drawCellNoValue(ctx, place.단차.값, data.standards.단차_cm, 'step',
+                    x, headerHeight + cellHeight * 2, cellWidth, cellHeight);
+            });
+            
+            ctx.strokeStyle = '#e1e4e8';
+            ctx.lineWidth = 1;
+            
+            ctx.beginPath();
+            ctx.moveTo(labelWidth, 0);
+            ctx.lineTo(labelWidth, headerHeight + cellHeight * 3);
+            ctx.stroke();
+            
+            for (let i = 0; i <= places.length; i++) {
+                const x = labelWidth + cellWidth * i;
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, headerHeight + cellHeight * 3);
+                ctx.stroke();
+            }
+            
+            ctx.beginPath();
+            ctx.moveTo(0, headerHeight);
+            ctx.lineTo(labelWidth + cellWidth * places.length, headerHeight);
+            ctx.stroke();
+            
+            for (let i = 1; i <= 3; i++) {
+                const y = headerHeight + cellHeight * i;
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(labelWidth + cellWidth * places.length, y);
+                ctx.stroke();
+            }
+            
+            canvas.dataset.cellWidth = cellWidth;
+            canvas.dataset.labelWidth = labelWidth;
+            canvas.dataset.headerHeight = headerHeight;
+            canvas.dataset.cellHeight = cellHeight;
+        }
+        
+        function drawCellNoValue(ctx, value, standard, type, x, y, width, height) {
+            if (value === null) {
+                ctx.fillStyle = '#f6f8fa';
+                ctx.fillRect(x, y, width, height);
+                return;
+            }
+            
+            let color;
+            if (type === 'width') {
+                if (value >= standard * 1.5) color = '#1f883d';
+                else if (value >= standard) color = '#56d364';
+                else if (value >= standard * 0.8) color = '#fb8500';
+                else color = '#cf222e';
+            } else {
+                if (value <= standard) color = '#1f883d';
+                else if (value <= standard * 1.5) color = '#56d364';
+                else if (value <= standard * 2) color = '#fb8500';
+                else color = '#cf222e';
+            }
+            
+            ctx.fillStyle = color;
+            ctx.fillRect(x, y, width, height);
+        }
+        
+        function initPlaceButtons() {
+            const northContainer = document.getElementById('north-places');
+            const southContainer = document.getElementById('south-places');
+            
+            northOrder.forEach(displayName => {
+                const place = findPlaceByDisplayName(displayName);
+                if (place) {
+                    const btn = document.createElement('button');
+                    btn.className = 'place-btn';
+                    btn.textContent = displayName;
+                    btn.dataset.placeName = place.장소;
+                    btn.onclick = () => selectPlaceByOriginalName(place.장소);
+                    northContainer.appendChild(btn);
+                }
+            });
+            
+            southOrder.forEach(displayName => {
+                const place = findPlaceByDisplayName(displayName);
+                if (place) {
+                    const btn = document.createElement('button');
+                    btn.className = 'place-btn';
+                    btn.textContent = displayName;
+                    btn.dataset.placeName = place.장소;
+                    btn.onclick = () => selectPlaceByOriginalName(place.장소);
+                    southContainer.appendChild(btn);
+                }
+            });
+            
+            // 남쪽 버튼들의 padding을 조정해서 북쪽과 같은 전체 길이로
+            setTimeout(() => {
+                const northWidth = northContainer.scrollWidth;
+                const southButtons = southContainer.querySelectorAll('.place-btn');
+                
+                if (southButtons.length > 0) {
+                    // 현재 남쪽 전체 너비
+                    let currentSouthWidth = southContainer.scrollWidth;
+                    const gap = 8; // 0.5rem = 8px
+                    const totalGaps = (southButtons.length - 1) * gap;
+                    
+                    // 버튼들의 현재 content 너비 합계
+                    let contentWidthSum = 0;
+                    southButtons.forEach(btn => {
+                        const style = window.getComputedStyle(btn);
+                        const paddingLeft = parseFloat(style.paddingLeft);
+                        const paddingRight = parseFloat(style.paddingRight);
+                        contentWidthSum += btn.offsetWidth - paddingLeft - paddingRight;
+                    });
+                    
+                    // 필요한 전체 padding
+                    const containerPadding = 32; // 1rem * 2 = 32px
+                    const availableWidth = northWidth - containerPadding - totalGaps - contentWidthSum;
+                    const paddingPerButton = availableWidth / (southButtons.length * 2); // 양쪽이니까 2로 나눔
+                    
+                    southButtons.forEach(btn => {
+                        btn.style.paddingLeft = `${paddingPerButton}px`;
+                        btn.style.paddingRight = `${paddingPerButton}px`;
+                    });
+                }
+            }, 100);
+            
+            const firstPlace = findPlaceByDisplayName(northOrder[0]);
+            if (firstPlace) selectPlaceByOriginalName(firstPlace.장소);
+        }
+        
+        function selectPlaceByOriginalName(originalName) {
+            const place = data.places.find(p => p.장소 === originalName);
+            if (!place) return;
+            
+            currentPlace = place;
+            document.querySelectorAll('.place-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.placeName === originalName);
+            });
+            updateDetailInfo();
+            updateDeviationChart();
+        }
+        
+        function updateDetailInfo() {
+            const container = document.getElementById('detailInfo');
+            const placeName = currentPlace.장소;
+            
+            // placeDetails에서 데이터 찾기
+            const details = placeDetails[placeName];
+            
+            if (!details) {
+                container.innerHTML = `
+                    <div style="color: #6a737d; text-align: center; padding: 2rem;">
+                        <strong>${placeName}</strong>에 대한 상세 정보가 없습니다.
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            
+            // 포장상태
+            if (details['포장상태'] && details['포장상태'].length > 0) {
+                html += '<div class="detail-category">';
+                html += '<div class="detail-category-title">포장상태</div>';
+                details['포장상태'].forEach(item => {
+                    const statusClass = item.상태 === '양호' ? 'good' : (item.상태.includes('긴급') ? 'urgent' : 'mid');
+                    const statusText = item.상태 === '양호' ? '양호' : (item.상태.includes('긴급') ? '긴급' : '개선');
+                    html += `
+                        <div class="detail-item ${statusClass}">
+                            <div class="detail-item-status">${statusText}</div>
+                            <div class="detail-item-text">${item.설명}</div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+            
+            // 점자블록
+            if (details['점자블록'] && details['점자블록'].length > 0) {
+                html += '<div class="detail-category">';
+                html += '<div class="detail-category-title">점자블록</div>';
+                const uniqueItems = {};
+                details['점자블록'].forEach(item => {
+                    const key = item.설명 + item.상태;
+                    if (!uniqueItems[key]) {
+                        uniqueItems[key] = item;
+                    }
+                });
+                Object.values(uniqueItems).forEach(item => {
+                    const statusClass = item.상태 === '양호' ? 'good' : (item.상태.includes('긴급') ? 'urgent' : 'mid');
+                    const statusText = item.상태 === '양호' ? '양호' : (item.상태.includes('긴급') ? '긴급' : '개선');
+                    html += `
+                        <div class="detail-item ${statusClass}">
+                            <div class="detail-item-status">${statusText}</div>
+                            <div class="detail-item-text">${item.설명}</div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+            
+            // 건물진입로
+            if (details['건물진입로'] && details['건물진입로'].length > 0) {
+                html += '<div class="detail-category">';
+                html += '<div class="detail-category-title">건물 진입로</div>';
+                details['건물진입로'].forEach(item => {
+                    const statusClass = item.상태 === '양호' ? 'good' : (item.상태.includes('긴급') ? 'urgent' : 'mid');
+                    const statusText = item.상태 === '양호' ? '양호' : (item.상태.includes('긴급') ? '긴급' : '개선');
+                    html += `
+                        <div class="detail-item ${statusClass}">
+                            <div class="detail-item-status">${statusText}</div>
+                            <div class="detail-item-text">${item.설명}</div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+            
+            if (html === '') {
+                html = '<div class="detail-empty">등록된 상세 정보가 없습니다.</div>';
+            }
+            
+            container.innerHTML = html;
+        }
+        
+        
+        function updateDeviationChart() {
+            const container = document.getElementById('deviationBars');
+            container.innerHTML = '';
+            
+            const metrics = [
+                { name: '유효폭', value: currentPlace.유효폭.값, deviation: currentPlace.유효폭.편차, unit: 'm', max: 5 },
+                { name: '기울기', value: currentPlace.기울기.값, deviation: currentPlace.기울기.편차, unit: '°', max: 10 },
+                { name: '단차', value: currentPlace.단차.값, deviation: currentPlace.단차.편차, unit: 'cm', max: 20 }
+            ];
+            
+            metrics.forEach(metric => {
+                if (metric.value === null) return;
+                
+                const item = document.createElement('div');
+                item.className = 'deviation-item';
+                
+                const isPositive = metric.deviation > 0;
+                const absDeviation = Math.abs(metric.deviation);
+                const percentage = Math.max(8, Math.min((absDeviation / metric.max) * 50, 50));
+                
+                const isLarge = percentage > 35;
+                let valueStyle;
+                if (isPositive) {
+                    valueStyle = isLarge ? 'right: 8px;' : 'left: 100%; margin-left: 8px;';
+                } else {
+                    valueStyle = isLarge ? 'left: 8px;' : 'right: 100%; margin-right: 8px;';
+                }
+                
+                item.innerHTML = `
+                    <div class="deviation-label">
+                        <span class="metric-name">${metric.name}</span>
+                        <span class="metric-value">실제: ${metric.value}${metric.unit} | 편차: ${metric.deviation > 0 ? '+' : ''}${metric.deviation.toFixed(2)}${metric.unit}</span>
+                    </div>
+                    <div class="deviation-bar-wrapper">
+                        <div class="deviation-baseline"></div>
+                        <div class="deviation-bar ${isPositive ? 'positive' : 'negative'}" 
+                             style="width: ${percentage}%;">
+                            <div class="deviation-value" style="${valueStyle}">
+                                ${isPositive ? '+' : ''}${metric.deviation.toFixed(1)}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(item);
+            });
+        }
+        
+        // 히트맵 클릭 이벤트
+        const heatmapCanvas = document.getElementById('heatmapCanvas');
+        const tooltip = document.getElementById('heatmapTooltip');
+        
+        heatmapCanvas.addEventListener('click', (e) => {
+            const canvas = e.target;
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            const labelWidth = parseFloat(canvas.dataset.labelWidth);
+            const headerHeight = parseFloat(canvas.dataset.headerHeight);
+            const cellWidth = parseFloat(canvas.dataset.cellWidth);
+            
+            if (x < labelWidth || y < headerHeight) return;
+            
+            const colIndex = Math.floor((x - labelWidth) / cellWidth);
+            if (colIndex >= 0 && colIndex < sortedPlaces.length) {
+                const place = sortedPlaces[colIndex];
+                selectPlaceByOriginalName(place.장소);
+                
+                const btn = document.querySelector(`[data-place-name="${place.장소}"]`);
+                if (btn) {
+                    btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                }
+            }
+        });
+        
+        heatmapCanvas.addEventListener('mousemove', (e) => {
+            const canvas = e.target;
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            const labelWidth = parseFloat(canvas.dataset.labelWidth);
+            const headerHeight = parseFloat(canvas.dataset.headerHeight);
+            const cellWidth = parseFloat(canvas.dataset.cellWidth);
+            const cellHeight = parseFloat(canvas.dataset.cellHeight);
+            
+            if (x < labelWidth || y < headerHeight) {
+                tooltip.style.display = 'none';
+                return;
+            }
+            
+            const colIndex = Math.floor((x - labelWidth) / cellWidth);
+            const rowIndex = Math.floor((y - headerHeight) / cellHeight);
+            
+            if (colIndex >= 0 && colIndex < sortedPlaces.length && rowIndex >= 0 && rowIndex < 3) {
+                const place = sortedPlaces[colIndex];
+                const metrics = ['유효폭', '기울기', '단차'];
+                const metricName = metrics[rowIndex];
+                const units = ['m', '°', 'cm'];
+                const unit = units[rowIndex];
+                
+                let value;
+                if (rowIndex === 0) value = place.유효폭.값;
+                else if (rowIndex === 1) value = place.기울기.값;
+                else value = place.단차.값;
+                
+                if (value !== null) {
+                    tooltip.innerHTML = `<strong>${place.장소}</strong><br>${metricName}: ${value}${unit}`;
+                } else {
+                    tooltip.innerHTML = `<strong>${place.장소}</strong><br>${metricName}: N/A`;
+                }
+                
+                tooltip.style.display = 'block';
+                tooltip.style.left = (e.clientX + 15) + 'px';
+                tooltip.style.top = (e.clientY + 15) + 'px';
+            } else {
+                tooltip.style.display = 'none';
+            }
+        });
+        
+        heatmapCanvas.addEventListener('mouseleave', () => {
+            tooltip.style.display = 'none';
+        });
+        
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                const activeBtn = document.querySelector('.sort-btn.active');
+                if (activeBtn) {
+                    drawHeatmap(activeBtn.dataset.sort);
+                }
+            }, 200);
+        });
+        
+        document.querySelectorAll('.sort-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                drawHeatmap(btn.dataset.sort);
+            });
+        });
+        
+        // 초기화
+        drawPlotlyCharts();
+        updateStatusStats();
+        drawHeatmap();
+        initPlaceButtons();
+    
+        
+        // ==========================================
+        // Plotly 차트 그리기 함수
+        // ==========================================
+        function drawPlotlyCharts() {
+            console.log('Drawing Plotly charts...');
+            const places = data.places;
+            console.log('Places data:', places);
+            
+            
+            // 1. Sunburst 차트 데이터 정의 (test2.html과 동일한 고정 데이터)
+            const sbLabels = [
+                "전체", 
+                "양호", "유효폭", "점자블록", "건물 진입로", "기울기/단차", "포장상태", 
+                "개선(장기)", "건물 진입로", "기울기/단차", "점자블록", 
+                "긴급조치", "유효폭", "포장상태", "기울기/단차", "점자블록", "건물 진입로"
+            ];
+            
+            const sbParents = [
+                "", 
+                "전체", "양호", "양호", "양호", "양호", "양호", 
+                "전체", "개선(장기)", "개선(장기)", "개선(장기)", 
+                "전체", "긴급조치", "긴급조치", "긴급조치", "긴급조치", "긴급조치"
+            ];
+            
+            const sbValues = [166, 117, 56, 24, 19, 14, 4, 33, 23, 8, 2, 16, 6, 5, 2, 2, 1];
+            
+            console.log('Sunburst labels:', sbLabels);
+            console.log('Sunburst parents:', sbParents);
+            console.log('Sunburst values:', sbValues);
+            
+            const statusColors = {
+                "양호": "rgb(200, 255, 200)",
+                "개선(장기)": "rgb(255, 255, 150)",
+                "긴급조치": "rgb(255, 200, 200)",
+            };
+            
+            const sbColors = sbLabels.map((label, i) => {
+                const parent = sbParents[i];
+                if (label === "전체") return "#ffffff";
+                if (statusColors[label]) return statusColors[label];
+                if (statusColors[parent]) return statusColors[parent];
+                return "#eeeeee";
+            });
+            
+            // Sunburst 차트 그리기
+            try {
+                Plotly.newPlot('sunburstChart', [{
+                    type: "sunburst",
+                    labels: sbLabels,
+                    parents: sbParents,
+                    values: sbValues,
+                    branchvalues: "total",
+                    textinfo: "label+value+percent parent",
+                    insidetextfont: { color: '#000000', size: 13 },
+                    marker: {
+                        colors: sbColors,
+                        line: {width: 2}
+                    }
+                }], {
+                    margin: { t: 20, b: 20, l: 20, r: 20 },
+                    font: { family: 'Pretendard, -apple-system, sans-serif' }
+                }, { displaylogo: false });
+                
+                console.log('Sunburst chart created successfully');
+            } catch (error) {
+                console.error('Error creating sunburst chart:', error);
+            }
+            
+            // 클릭 이벤트 핸들러
+            var dynamicDesc = document.getElementById('dynamicDesc');
+            var lastClickedLabel = null;
+            
+            document.getElementById('sunburstChart').on('plotly_click', function(eventData) {
+                var point = eventData.points[0];
+                var label = point.label;
+                var value = point.value;
+                
+                if (label === '전체' || label === 'Total' || label === lastClickedLabel) {
+                    dynamicDesc.innerHTML = "<p style='color:#888; text-align:center; margin-top:20px;'>👈 차트를 클릭하면 상세 설명이 나옵니다.</p>";
+                    lastClickedLabel = null;
+                    return;
+                }
+                
+                lastClickedLabel = label;
+                
+                // 자식 항목 찾기
+                var childrenList = [];
+                for(var i=0; i<sbParents.length; i++) {
+                    if(sbParents[i] === label) {
+                        childrenList.push({
+                            name: sbLabels[i],
+                            count: sbValues[i]
+                        });
+                    }
+                }
+                
+                var html = "";
+                if (childrenList.length > 0) {
+                    html += "<h3>👉 " + label + " 현황 분석</h3>";
+                    html += "<p>선택하신 <span class='highlight-text'>" + label + "</span> 상태에 대해 안내드리겠습니다.</p>";
+                    html += "<p>전체 항목 중 <strong>총 " + value + "곳</strong>이 해당 상태로 분류되었습니다.</p>";
+                    html += "<p>구체적인 세부 항목을 살펴보면 다음과 같습니다.</p>";
+                    html += "<ul style='margin-top:10px; padding-left:20px;'>";
+                    childrenList.forEach(function(item) {
+                        html += "<li><strong>" + item.name + ":</strong> " + item.count + "곳</li>";
+                    });
+                    html += "</ul>";
+                } else {
+                    html += "<h3>👉 세부 항목: " + label + "</h3>";
+                    html += "<p>이 항목은 <span class='highlight-text'>" + point.parent + "</span> 상태에 속하는 <strong>" + label + "</strong> 데이터입니다.</p>";
+                    html += "<p>해당되는 건수는 <strong>총 " + value + "곳</strong>입니다.</p>";
+                }
+                
+                html += "<p style='margin-top:20px; font-size:0.9em; color:#999;'>* 가운데를 클릭하면 다시 전체 화면으로 돌아갑니다.</p>";
+                
+                dynamicDesc.innerHTML = html;
+            });
+            
+            // 2. Box Plot 데이터 생성 (실제 측정값 기준)
+            const boxMX = [];
+            const boxMY = [];
+            const boxCmX = [];
+            const boxCmY = [];
+            const boxDegX = [];
+            const boxDegY = [];
+            
+            places.forEach(place => {
+                // 유효폭
+                if (place.유효폭 && place.유효폭.값 !== null) {
+                    boxMX.push('유효폭');
+                    boxMY.push(place.유효폭.값);
+                }
+                
+                // 단차
+                if (place.단차 && place.단차.값 !== null) {
+                    boxCmX.push('단차');
+                    boxCmY.push(place.단차.값);
+                }
+                
+                // 기울기
+                if (place.기울기 && place.기울기.값 !== null) {
+                    boxDegX.push('기울기');
+                    boxDegY.push(place.기울기.값);
+                }
+            });
+            
+            console.log('Box plot data - Width:', boxMY.length, 'Step:', boxCmY.length, 'Slope:', boxDegY.length);
+            
+            // Box Plot - 유효폭 (m)
+            Plotly.newPlot('boxChartM', [{
+                x: boxMX,
+                y: boxMY,
+                type: 'box',
+                name: '데이터',
+                boxpoints: 'all',
+                jitter: 0.3,
+                pointpos: -1.8,
+                marker: { color: '#42A5F5' }
+            }], {
+                title: '<b>📏 유효폭 분포 (m)</b>',
+                yaxis: { title: '미터 (m)' },
+                margin: { t: 40, b: 60, l: 50, r: 20 },
+                font: { family: 'Pretendard, -apple-system, sans-serif' },
+                shapes: [{
+                    type: 'line',
+                    x0: -0.5,
+                    x1: 0.5,
+                    y0: 1.2,
+                    y1: 1.2,
+                    line: { color: 'red', width: 2, dash: 'dash' }
+                }],
+                annotations: [{
+                    x: 0,
+                    y: 1.2,
+                    text: '법적기준: 1.2m',
+                    showarrow: false,
+                    yshift: 10,
+                    font: { color: 'red', size: 10 }
+                }]
+            }, { displaylogo: false });
+            
+            // Box Plot - 단차 (cm)
+            if (boxCmY.length > 0) {
+                Plotly.newPlot('boxChartCm', [{
+                    x: boxCmX,
+                    y: boxCmY,
+                    type: 'box',
+                    name: '데이터',
+                    boxpoints: 'all',
+                    jitter: 0.3,
+                    pointpos: -1.8,
+                    marker: { color: '#AB47BC' }
+                }], {
+                    title: '<b>📐 단차 분포 (cm)</b>',
+                    yaxis: { title: '센티미터 (cm)' },
+                    margin: { t: 40, b: 60, l: 50, r: 20 },
+                    font: { family: 'Pretendard, -apple-system, sans-serif' },
+                    shapes: [{
+                        type: 'line',
+                        x0: -0.5,
+                        x1: 0.5,
+                        y0: 2.0,
+                        y1: 2.0,
+                        line: { color: 'red', width: 2, dash: 'dash' }
+                    }],
+                    annotations: [{
+                        x: 0,
+                        y: 2.0,
+                        text: '법적기준: 2cm',
+                        showarrow: false,
+                        yshift: 10,
+                        font: { color: 'red', size: 10 }
+                    }]
+                }, { displaylogo: false });
+            } else {
+                document.getElementById('boxChartCm').innerHTML = '<div style="padding:50px; text-align:center; color:#999;">단차 데이터가 없습니다.</div>';
+            }
+            
+            // Box Plot - 기울기 (도)
+            if (boxDegY.length > 0) {
+                Plotly.newPlot('boxChartDeg', [{
+                    x: boxDegX,
+                    y: boxDegY,
+                    type: 'box',
+                    name: '데이터',
+                    boxpoints: 'all',
+                    jitter: 0.3,
+                    pointpos: -1.8,
+                    marker: { color: '#FF7043' }
+                }], {
+                    title: '<b>⛰️ 기울기 분포 (도)</b>',
+                    yaxis: { title: '각도 (Degree)' },
+                    margin: { t: 40, b: 60, l: 50, r: 20 },
+                    font: { family: 'Pretendard, -apple-system, sans-serif' },
+                    shapes: [{
+                        type: 'line',
+                        x0: -0.5,
+                        x1: 0.5,
+                        y0: 4.8,
+                        y1: 4.8,
+                        line: { color: 'red', width: 2, dash: 'dash' }
+                    }],
+                    annotations: [{
+                        x: 0,
+                        y: 4.8,
+                        text: '법적기준: 4.8도',
+                        showarrow: false,
+                        yshift: 10,
+                        font: { color: 'red', size: 10 }
+                    }]
+                }, { displaylogo: false });
+            } else {
+                document.getElementById('boxChartDeg').innerHTML = '<div style="padding:50px; text-align:center; color:#999;">기울기 데이터가 없습니다.</div>';
+            }
+        }
+
+    </script>
+</body>
+</html>
