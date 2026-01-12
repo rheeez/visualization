@@ -1709,7 +1709,8 @@ const sbValues = [
                     marker: {
                         colors: sbColors,
                         line: {width: 2}
-                    }
+                    },
+                    hovertemplate: '<b>%{label}</b><br>개수: %{value}개<extra></extra>'
                 }], {
                     margin: { t: 20, b: 20, l: 20, r: 20 },
                     font: { family: 'Pretendard, -apple-system, sans-serif' }
@@ -1811,25 +1812,31 @@ const sbValues = [
             
             const boxMX = [];
             const boxMY = [];
+            const boxMPlaces = [];
             const boxCmX = [];
             const boxCmY = [];
+            const boxCmPlaces = [];
             const boxDegX = [];
             const boxDegY = [];
+            const boxDegPlaces = [];
             
             places.forEach(place => {
                 if (place.유효폭 && place.유효폭.값 !== null) {
                     boxMX.push('유효폭');
                     boxMY.push(place.유효폭.값);
+                    boxMPlaces.push(place.장소);
                 }
                 
                 if (place.단차 && place.단차.값 !== null) {
                     boxCmX.push('단차');
                     boxCmY.push(place.단차.값);
+                    boxCmPlaces.push(place.장소);
                 }
                 
                 if (place.기울기 && place.기울기.값 !== null) {
                     boxDegX.push('기울기');
                     boxDegY.push(place.기울기.값);
+                    boxDegPlaces.push(place.장소);
                 }
             });
             
@@ -1841,7 +1848,13 @@ const sbValues = [
                 boxpoints: 'all',
                 jitter: 0.3,
                 pointpos: -1.8,
-                marker: { color: '#42A5F5' }
+                marker: { 
+                    color: '#42A5F5',
+                    size: 6
+                },
+                text: boxMPlaces,
+                hoveron: 'points',
+                hovertemplate: '<b>%{text}</b><br>유효폭: %{y}m<extra></extra>'
             }], {
                 title: '<b>유효폭 분포 (m)</b>',
                 yaxis: { title: '미터 (m)' },
@@ -1874,7 +1887,13 @@ const sbValues = [
                     boxpoints: 'all',
                     jitter: 0.3,
                     pointpos: -1.8,
-                    marker: { color: '#AB47BC' }
+                    marker: { 
+                        color: '#AB47BC',
+                        size: 6
+                    },
+                    text: boxCmPlaces,
+                    hoveron: 'points',
+                    hovertemplate: '<b>%{text}</b><br>단차: %{y}cm<extra></extra>'
                 }], {
                     title: '<b>단차 분포 (cm)</b>',
                     yaxis: { title: '센티미터 (cm)' },
@@ -1910,7 +1929,13 @@ const sbValues = [
                     boxpoints: 'all',
                     jitter: 0.3,
                     pointpos: -1.8,
-                    marker: { color: '#FF7043' }
+                    marker: { 
+                        color: '#FF7043',
+                        size: 6
+                    },
+                    text: boxDegPlaces,
+                    hoveron: 'points',
+                    hovertemplate: '<b>%{text}</b><br>기울기: %{y}도<extra></extra>'
                 }], {
                     title: '<b>기울기 분포 (도)</b>',
                     yaxis: { title: '각도 (Degree)' },
