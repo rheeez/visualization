@@ -17,5 +17,5 @@ https://rheeez.github.io/visualization/NewVisualization.html
 
 ```
 최초 배포: 2026. 1. 6. 11:34
-최종 수정: 2026. 1. 13. 02:37
+최종 수정: 2026. 1. 13. 02:50
 ```
