@@ -7,7 +7,7 @@ RRRRRR   EEEEE    AAAAAAA  DD   DD  MM MMM MM  EEEEE
 RR   RR  EE       AA   AA  DD   DD  MM  M  MM  EE
 RR   RR  EEEEEEE  AA   AA  DDDDDD   MM     MM  EEEEEEE
 ```
-https://rheeez.github.io/visualization/Visualization.html
+https://rheeez.github.io/visualization/NewVisualization.html
 
 > [!IMPORTANT]
 > 이 문서는 2025년 12월 광주광역시 동구 금남로 일대를 조사한 DataSheet를 기준으로 작성되었습니다.
@@ -17,5 +17,5 @@ https://rheeez.github.io/visualization/Visualization.html
 
 ```
 최초 배포: 2026. 1. 6. 11:34
-최종 수정: 2026. 1. 13. 02:29
+최종 수정: 2026. 1. 13. 02:37
 ```
