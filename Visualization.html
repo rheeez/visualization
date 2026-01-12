@@ -744,6 +744,22 @@
             </div>
         </div>
         
+        <div class="heatmap-section">
+            <h2>전체 장소 접근성 현황</h2>
+            <div class="heatmap-controls">
+                <button class="sort-btn active" data-sort="none">전체</button>
+                <button class="sort-btn" data-sort="width">유효폭순</button>
+                <button class="sort-btn" data-sort="slope">기울기순</button>
+                <button class="sort-btn" data-sort="step">단차순</button>
+            </div>
+            <div class="heatmap-container">
+                <canvas id="heatmapCanvas"></canvas>
+            </div>
+        </div>
+        
+        <div class="heatmap-tooltip" id="heatmapTooltip"></div>
+        
+
         <div class="status-section">
             <h2>상태별 현황 (클릭하여 보기)<span id="statusInfo" style="font-size: 0.75rem; color: #6a737d; font-weight: 400; margin-left: 1rem;"></span></h2>
             <div class="status-grid">
@@ -765,22 +781,7 @@
             </div>
         </div>
         
-        <div class="heatmap-section">
-            <h2>전체 장소 접근성 현황</h2>
-            <div class="heatmap-controls">
-                <button class="sort-btn active" data-sort="none">전체</button>
-                <button class="sort-btn" data-sort="width">유효폭순</button>
-                <button class="sort-btn" data-sort="slope">기울기순</button>
-                <button class="sort-btn" data-sort="step">단차순</button>
-            </div>
-            <div class="heatmap-container">
-                <canvas id="heatmapCanvas"></canvas>
-            </div>
-        </div>
-        
-        <div class="heatmap-tooltip" id="heatmapTooltip"></div>
-        
-        <div class="place-selector">
+                <div class="place-selector">
             <h2>장소 선택</h2>
             <div class="road-layout">
                 <div class="road-wrapper">
@@ -977,18 +978,16 @@ const placeDetails = {"518민주화운동기록관": {"유효폭": [{"상태": "
                         if (i.상태 !== '양호') issues.push({ cat: '진입', text: i.설명, status: i.상태 });
                     });
                     
-                    if (issues.length > 0 && issueCount < 10) {
+                    if (issues.length > 0) {
                         issues.forEach(issue => {
-                            if (issueCount < 10) {
-                                const itemStatusClass = issue.status === '양호' ? 'good' : (issue.status.includes('긴급') ? 'urgent' : 'mid');
-                                html += `
-                                    <div class="detail-item ${itemStatusClass}" style="margin-bottom: 0.5rem;">
-                                        <div class="detail-item-status">${item.name}</div>
-                                        <div class="detail-item-text">[${issue.cat}] ${issue.text}</div>
-                                    </div>
-                                `;
-                                issueCount++;
-                            }
+                            const itemStatusClass = issue.status === '양호' ? 'good' : (issue.status.includes('긴급') ? 'urgent' : 'mid');
+                            html += `
+                                <div class="detail-item ${itemStatusClass}" style="margin-bottom: 0.5rem;">
+                                    <div class="detail-item-status">${item.name}</div>
+                                    <div class="detail-item-text">[${issue.cat}] ${issue.text}</div>
+                                </div>
+                            `;
+                            issueCount++;
                         });
                     }
                 });
