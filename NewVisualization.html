@@ -266,9 +266,9 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
         
-        .status-item.good { border-color: #C8FFC8; }
-        .status-item.mid { border-color: #FFFF96; }
-        .status-item.urgent { border-color: #FFC8C8; }
+        .status-item.good { border-color: #1f883d; background: #E8FFE8; }
+        .status-item.mid { border-color: #fb8500; background: #FFF4E6; }
+        .status-item.urgent { border-color: #cf222e; background: #FFE8E8; }
         
         .status-label {
             font-size: 0.75rem;
@@ -278,9 +278,9 @@
             font-weight: 600;
         }
         
-        .status-item.good .status-label { color: #C8FFC8; }
-        .status-item.mid .status-label { color: #FFFF96; }
-        .status-item.urgent .status-label { color: #FFC8C8; }
+        .status-item.good .status-label { color: #1f883d; }
+        .status-item.mid .status-label { color: #fb8500; }
+        .status-item.urgent .status-label { color: #cf222e; }
         
         .status-value {
             font-size: 2.5rem;
@@ -562,15 +562,15 @@
         }
         
         .detail-item.good {
-            border-left-color: #C8FFC8;
+            border-left-color: #1f883d;
         }
         
         .detail-item.mid {
-            border-left-color: #FFFF96;
+            border-left-color: #fb8500;
         }
         
         .detail-item.urgent {
-            border-left-color: #FFC8C8;
+            border-left-color: #cf222e;
         }
         
         .detail-item-status {
@@ -583,18 +583,18 @@
         }
         
         .detail-item.good .detail-item-status {
-            color: #C8FFC8;
-            background: #dafbe1;
+            color: #1f883d;
+            background: #E8FFE8;
         }
         
         .detail-item.mid .detail-item-status {
-            color: #FFFF96;
-            background: #fff4e6;
+            color: #fb8500;
+            background: #FFF4E6;
         }
         
         .detail-item.urgent .detail-item-status {
-            color: #FFC8C8;
-            background: #ffebe9;
+            color: #cf222e;
+            background: #FFE8E8;
         }
         
         .detail-item-text {
@@ -898,23 +898,23 @@
         }
         
         .table-dot {
-            width: 8px;
-            height: 8px;
+            width: 9px;
+            height: 9px;
             border-radius: 50%;
             transition: all 0.15s ease;
             cursor: pointer;
         }
         
         .table-dot:hover {
-            transform: scale(1.8);
+            transform: scale(1.5);
             box-shadow: 0 0 8px rgba(0, 0, 0, 0.4);
             z-index: 10;
         }
         
-        .table-dot.good { background: #C8FFC8; }
-        .table-dot.mid { background: #FFFF96; }
-        .table-dot.urgent { background: #FFC8C8; }
-        .table-dot.none { background: #d0d7de; }
+        .table-dot.good { background: #C8FFC8; border: 1px solid #1f883d; }
+        .table-dot.mid { background: #FFFF96; border: 1px solid #fb8500; }
+        .table-dot.urgent { background: #FFC8C8; border: 1px solid #cf222e; }
+        .table-dot.none { background: #e8e8e8; border: none; }
 
     
         #dotTooltip {
@@ -3972,7 +3972,7 @@ const placeDetails = {
         function updateDetailInfoForMultiplePlaces(places, status) {
             const container = document.getElementById('detailInfo');
             
-            const statusColor = status === '양호' ? '#C8FFC8' : (status.includes('긴급') ? '#FFC8C8' : '#FFFF96');
+            const statusColor = status === '양호' ? '#1f883d' : (status.includes('긴급') ? '#cf222e' : '#fb8500');
             
             let html = `
                 <div style="margin-bottom: 1.5rem; padding: 1rem; background: #f6f8fa; border-left: 4px solid ${statusColor};">
@@ -4670,7 +4670,7 @@ const sbValues = [
             });
             html += "</ul>";
         }
-        html += "<p style='margin-top:15px; color:#C8FFC8; font-weight:600;'>이 구역들은 현재 접근성이 양호합니다.</p>";
+        html += "<p style='margin-top:15px; color:#1f883d; font-weight:600;'>이 구역들은 현재 접근성이 양호합니다.</p>";
         
     } else if (label === "개선(장기)") {
         html += "<h3>개선(장기)</h3>";
@@ -4684,7 +4684,7 @@ const sbValues = [
         html += "<li>점자블록 설치 또는 보수가 필요한 구역</li>";
         html += "<li>포장 상태가 불량한 지점</li>";
         html += "</ul>";
-        html += "<p style='margin-top:15px; color:#FFFF96; font-weight:600;'>체계적인 개선 계획 수립이 권장됩니다.</p>";
+        html += "<p style='margin-top:15px; color:#fb8500; font-weight:600;'>체계적인 개선 계획 수립이 권장됩니다.</p>";
         
     } else if (label === "긴급조치") {
         html += "<h3>긴급조치</h3>";
@@ -4699,7 +4699,7 @@ const sbValues = [
         html += "<li>점자블록: 손상 또는 완전 누락된 구역</li>";
         html += "<li>건물 진입로: 접근 자체가 어려운 출입구</li>";
         html += "</ul>";
-        html += "<p style='margin-top:15px; color:#FFC8C8; font-weight:600;'>우선순위를 두고 신속한 개선 조치가 필요합니다.</p>";
+        html += "<p style='margin-top:15px; color:#cf222e; font-weight:600;'>우선순위를 두고 신속한 개선 조치가 필요합니다.</p>";
         
     } else if (childrenList.length > 0) {
         html += "<h3>" + label + " 현황 분석</h3>";
